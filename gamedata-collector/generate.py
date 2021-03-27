@@ -1,5 +1,6 @@
 import sys
 
+import deepmerge
 import json
 import pprint
 import yaml
@@ -37,108 +38,126 @@ def get_spawnerstyle_info(obj):
     return ss_type, ss_idx
 
 
-def get_spawnerstyle_parser(type):
-    func_map = {'SpawnerStyle_Den': parse_spawnerstyle_den,
-                'SpawnerStyle_Encounter': parse_spawnerstyle_encounter,
-                'SpawnerStyle_Single': parse_spawnerstyle_single}
-    return func_map[type]
+class MapSpawnParser(object):
+    def __init__(self, filepath, basepath):
+        with open(filepath, 'r') as f:
+            self.data = json.load(f)
 
+        chunks = filepath.split('/')
+        self.map_name = chunks[-1].split('_')[0]
+        self.map_base_path = filepath[len(basepath):].split('.')[0]
+        self.map_export_name = chunks[-1].split('.')[0]
+        idx = chunks.index('Maps')
+        self.package = '/'.join(chunks[idx-1:idx])
+        self.spawners_base_path = "{base}.{map}:PersistentLevel".format(
+            base=self.map_base_path,
+            map=self.map_export_name
+        )
 
-def parse_spawnerstyle_encounter(data, idx):
-    ss = get_export_idx(data, idx)
-    output = {'Waves': [],
-              'Type': 'Encounter'}
-    for wave in ss.get('Waves'):
-       wtype, widx = get_spawnerstyle_info(wave)
-       func = get_spawnerstyle_parser(wtype)
-       wave_output = func(data, widx)
-       output['Waves'].append(wave_output)
-    return output
-
-
-def parse_spawnerstyle_single(data, idx):
-    __so = 'SpawnOptions'
-    ss = get_export_idx(data, idx)
-    spawnopts = ss.get(__so)
-    so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
-
-    # Special case: Spawners can be used to place dynamic objects like lootables
-    # we need to filter these out
-    if 'Enemies' not in so_str:
-        return None
-
-    output = {}
-    output[__so] = so_str
-    output['Type'] = 'Single'
-    return output
-
-
-def parse_spawnerstyle_den(data, idx):
-    __nap = 'NumActorsParam'
-    __maawp = 'MaxAliveActorsWhenPassive'
-    __maawt = 'MaxAliveActorsWhenThreatened'
-    __so = 'SpawnOptions'
-    ss = get_export_idx(data, idx)
-    spawnopts = ss.get(__so)
-    so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
-
-    # Special case: Spawners can be used to place dynamic objects like lootables
-    # we need to filter these out
-    if 'Enemies' not in so_str:
-        return None
-
-    output = {}
-    output[__nap] = get_bvc(ss, __nap)
-    output[__maawp] = get_bvc(ss, __maawp)
-    output[__maawt] = get_bvc(ss, __maawt)
-    output[__so] = so_str
-    output['Type'] = 'Den'
-    return output
-
-
-def build_spawner_info(data, spawner):
-    # Find our SpawnerComponent by it's export index
-    sc_idx = spawner.get('SpawnerComponent').get('export')
-    sc = get_export_idx(d, sc_idx)
-    ss_type, ss_idx = get_spawnerstyle_info(sc)
-    ss_func = get_spawnerstyle_parser(ss_type)
-    ss = ss_func(data, ss_idx)
-    return ss
-
-
-def parse_spawners(data, type):
-    spawners = get_by_export_type(d, type)
-    output = []
-    for spawner in spawners:
-        sinfo = build_spawner_info(data, spawner)
-        if sinfo is not None:
-            output.append(sinfo)
-    return output
-
-
-
-input_path = sys.argv[1]
-with open(input_path, 'r') as f:
-    d = json.load(f)
-
-nonmission_spawners = 'OakSpawner'
-mission_spawners = 'OakMissionSpawner'
-
-nonmission_data = parse_spawners(d, nonmission_spawners)
-mission_data = parse_spawners(d, mission_spawners)
-chunks = input_path.split('/')
-map_name = chunks[-2]
-idx1 = chunks.index('Game')
-idx2 = chunks.index('Maps')
-package = '/'.join(chunks[idx1:idx2])
-
-output = {
-    package: {
-        map_name: {
-            'Mission': mission_data,
-            'NonMission': nonmission_data
+    def parse(self):
+        nonmission_data = self.parse_spawners('OakSpawner')
+        mission_data = self.parse_spawners('OakMissionSpawner')
+        all_spawners = deepmerge.always_merger.merge(mission_data,
+                                                     nonmission_data)
+        output = {
+            self.package: {
+                self.map_name: all_spawners
+            }
         }
-    }
-}
+        return output
 
-print(yaml.dump(output))
+    def build_spawner_info(self, spawner):
+        spawner_id = spawner['_jwp_object_name']
+        path = [self.spawners_base_path, spawner_id]
+
+        def parse_spawnerstyle_encounter(idx):
+            ss = get_export_idx(self.data, idx)
+            ss_name= ss['_jwp_object_name']
+            output = {}
+            path.append('')
+            for i, wave in enumerate(ss.get('Waves')):
+               path[-1] = ss_name
+               wtype, widx = get_spawnerstyle_info(wave)
+               func = get_spawnerstyle_parser(wtype)
+               wave_output = func(widx)
+               index_key = '{sid}__wave_{index}'.format(
+                   sid=spawner_id,
+                   index=i
+               )
+               output[index_key] = list(wave_output.values())[0]
+            return output
+        
+        def parse_spawnerstyle_single(idx):
+            __so = 'SpawnOptions'
+            ss = get_export_idx(self.data, idx)
+            ss_name= ss['_jwp_object_name']
+            __path = list(path)
+            __path.append(ss_name)
+            spawnopts = ss.get(__so)
+            so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
+        
+            # Special case: Spawners can be used to place dynamic objects like lootables
+            # we need to filter these out
+            if 'Enemies' not in so_str:
+                return None
+        
+            output = {}
+            output[__so] = so_str
+            output['Type'] = 'Single'
+            output['Path'] = '.'.join(__path)
+            return {spawner_id: output}
+        
+        def parse_spawnerstyle_den(idx):
+            __nap = 'NumActorsParam'
+            __maawp = 'MaxAliveActorsWhenPassive'
+            __maawt = 'MaxAliveActorsWhenThreatened'
+            __so = 'SpawnOptions'
+            ss = get_export_idx(self.data, idx)
+            ss_name= ss['_jwp_object_name']
+            __path = list(path)
+            __path.append(ss_name)
+            spawnopts = ss.get(__so)
+            so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
+        
+            # Special case: Spawners can be used to place dynamic objects like lootables
+            # we need to filter these out
+            if 'Enemies' not in so_str:
+                return None
+
+            output = {}
+            output[__nap] = get_bvc(ss, __nap)
+            output[__maawp] = get_bvc(ss, __maawp)
+            output[__maawt] = get_bvc(ss, __maawt)
+            output[__so] = so_str
+            output['Type'] = 'Den'
+            output['Path'] = '.'.join(__path)
+            return {spawner_id: output}
+
+        def get_spawnerstyle_parser(type):
+            func_map = {'SpawnerStyle_Den': parse_spawnerstyle_den,
+                        'SpawnerStyle_Encounter': parse_spawnerstyle_encounter,
+                        'SpawnerStyle_Single': parse_spawnerstyle_single}
+            return func_map[type]
+
+        # Find our SpawnerComponent by it's export index
+        sc_idx = spawner.get('SpawnerComponent').get('export')
+        sc = get_export_idx(self.data, sc_idx)
+        ss_type, ss_idx = get_spawnerstyle_info(sc)
+        ss_func = get_spawnerstyle_parser(ss_type)
+        ss = ss_func(ss_idx)
+        return ss
+
+    def parse_spawners(self, type):
+        spawners = get_by_export_type(self.data, type)
+        output = {}
+        for spawner in spawners:
+            sinfo = self.build_spawner_info(spawner)
+            if sinfo is not None:
+                output = deepmerge.always_merger.merge(output, sinfo)
+        return output
+
+
+
+
+p = MapSpawnParser(sys.argv[1], sys.argv[2])
+pprint.pprint(p.parse())
