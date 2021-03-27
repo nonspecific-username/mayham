@@ -1,4 +1,6 @@
+import argparse
 import sys
+
 
 import deepmerge
 import json
@@ -6,9 +8,19 @@ import pprint
 import yaml
 
 
-if len(sys.argv) < 2:
-    print('Error: input path is not specified')
-    sys.exit(1)
+parser = argparse.ArgumentParser(description='Generate spawn data')
+subparsers = parser.add_subparsers(dest='target')
+subparsers.required=True
+single_p = subparsers.add_parser('single', help='Parse a single file')
+list_p = subparsers.add_parser('list', help='Parse a file list')
+single_p.add_argument('base_path', metavar='base-path', type=str,
+                    help='base game path')
+single_p.add_argument('json_path', metavar='json-path', type=str,
+                    help='path of a parsed json file')
+list_p.add_argument('list', metavar='list', type=str,
+                    help='path of a file list to parse')
+parser.add_argument('--output', type=str, help='file to write output to')
+args = parser.parse_args()
 
 
 def get_matching(data, field, value):
@@ -165,8 +177,21 @@ class MapSpawnParser(object):
                 output = deepmerge.always_merger.merge(output, sinfo)
         return output
 
-
-
-
-p = MapSpawnParser(sys.argv[1], sys.argv[2])
-pprint.pprint(p.parse())
+if __name__ == '__main__':
+    output = {}
+    if args.target == 'list':
+        with open(args.list, 'r') as f:
+            data = f.read().splitlines()
+        basepath = data[0]
+        for filepath in data[1:]:
+            msp = MapSpawnParser(filepath, basepath)
+            output = deepmerge.always_merger.merge(output, msp.parse())
+    elif args.target == 'single':
+        msp = MapSpawnParser(args.json_path, args.base_path)
+        output = deepmerge.always_merger.merge(output, msp.parse())
+    output_txt = yaml.dump(output)
+    if args.output is not None:
+        with open(args.output, 'w+') as f:
+            f.write(output_txt)
+    else:
+        print(output_txt)

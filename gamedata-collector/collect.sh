@@ -7,6 +7,9 @@ JWP_CMD='wine64 /home/dn/projects/bl3/jwp/apo-jwp.exe'
 WINDEBUG=fixme-all
 
 
+echo $GAMEDATA_PATH > $OUTPUT_FILE
+
+
 for MAPFILE in $(find $GAMEDATA_PATH -name '*.umap'); do
   echo "Checking map file $MAPFILE..."
   if strings $MAPFILE | grep -qE 'OakMissionSpawner|OakSpawner'; then
