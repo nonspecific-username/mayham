@@ -149,13 +149,14 @@ class MapSpawnParser(object):
             output[__maawp] = get_bvc(ss, __maawp)
             output[__maawt] = get_bvc(ss, __maawt)
             output[__so] = so_str
-            output['Type'] = 'Den'
+            output['Type'] = 'Multiple'
             output['Path'] = '.'.join(__path)
             output['AttrBase'] = '.'.join(__attr)
             return {spawner_id: output}
 
         def get_spawnerstyle_parser(type):
             func_map = {'SpawnerStyle_Den': parse_spawnerstyle_den,
+                        'SpawnerStyle_Bunch': parse_spawnerstyle_den,
                         'SpawnerStyle_Encounter': parse_spawnerstyle_encounter,
                         'SpawnerStyle_Single': parse_spawnerstyle_single}
             return func_map[type]
@@ -164,6 +165,7 @@ class MapSpawnParser(object):
         sc_idx = spawner.get('SpawnerComponent').get('export')
         sc = get_export_idx(self.data, sc_idx)
         ss_type, ss_idx = get_spawnerstyle_info(sc)
+        print(self.map_base_path)
         ss_func = get_spawnerstyle_parser(ss_type)
         ss = ss_func(ss_idx)
         return ss
