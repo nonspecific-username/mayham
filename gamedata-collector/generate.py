@@ -69,14 +69,17 @@ class MapSpawnParser(object):
     def build_spawner_info(self, spawner):
         spawner_id = spawner['_jwp_object_name']
         path = [self.spawners_base_path, spawner_id]
+        attr = ['SpawnerComponent.Object.']
 
         def parse_spawnerstyle_encounter(idx):
             ss = get_export_idx(self.data, idx)
             ss_name= ss['_jwp_object_name']
             output = {}
             path.append('')
+            attr.append('')
             for i, wave in enumerate(ss.get('Waves')):
                path[-1] = ss_name
+               attr[-1] = 'SpawnerStyle.Object.Waves[{}]'.format(i)
                wtype, widx = get_spawnerstyle_info(wave)
                func = get_spawnerstyle_parser(wtype)
                wave_output = func(widx)
@@ -93,6 +96,8 @@ class MapSpawnParser(object):
             ss_name= ss['_jwp_object_name']
             __path = list(path)
             __path.append(ss_name)
+            __attr = list(attr)
+            __attr.append('SpawnerStyle.Object')
             spawnopts = ss.get(__so)
             so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
         
@@ -105,6 +110,7 @@ class MapSpawnParser(object):
             output[__so] = so_str
             output['Type'] = 'Single'
             output['Path'] = '.'.join(__path)
+            output['AttrBase'] = '.'.join(__attr)
             return {spawner_id: output}
         
         def parse_spawnerstyle_den(idx):
@@ -116,6 +122,8 @@ class MapSpawnParser(object):
             ss_name= ss['_jwp_object_name']
             __path = list(path)
             __path.append(ss_name)
+            __attr = list(attr)
+            __attr.append('SpawnerStyle.Object')
             spawnopts = ss.get(__so)
             so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
         
@@ -131,6 +139,7 @@ class MapSpawnParser(object):
             output[__so] = so_str
             output['Type'] = 'Den'
             output['Path'] = '.'.join(__path)
+            output['AttrBase'] = '.'.join(__attr)
             return {spawner_id: output}
 
         def get_spawnerstyle_parser(type):
