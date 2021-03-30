@@ -133,19 +133,14 @@ class MapSpawnParser(object):
             output['Path'] = '.'.join(__path)
             output['AttrBase'] = '.'.join(__attr)
             return {spawner_id: output}
-        
-        def parse_spawnerstyle_den(idx):
+
+        def parse_simple(obj):
             __nap = 'NumActorsParam'
             __maawp = 'MaxAliveActorsWhenPassive'
             __maawt = 'MaxAliveActorsWhenThreatened'
             __so = 'SpawnOptions'
-            ss = get_export_idx(self.data, idx)
-            ss_name= ss['_jwp_object_name']
-            __path = list(path)
-            __path.append(ss_name)
-            __attr = list(attr)
-            __attr.append('SpawnerStyle.Object')
-            spawnopts = ss.get(__so)
+            output = {}
+            spawnopts = obj.get(__so)
             if spawnopts is None:
                 msg = ("WARNING: spawner {} doesn't have SpawnOptions "
                        "defined, skipping...")
@@ -161,14 +156,48 @@ class MapSpawnParser(object):
                 return None
 
             output = {}
-            output[__nap] = get_bvc(ss, __nap)
-            output[__maawp] = get_bvc(ss, __maawp)
-            output[__maawt] = get_bvc(ss, __maawt)
+            output[__nap] = get_bvc(obj, __nap)
+            output[__maawp] = get_bvc(obj, __maawp)
+            output[__maawt] = get_bvc(obj, __maawt)
             output[__so] = so_str
+            return output
+        
+        def parse_spawnerstyle_den(idx):
+            ss = get_export_idx(self.data, idx)
+            ss_name= ss['_jwp_object_name']
+            __path = list(path)
+            __path.append(ss_name)
+            __attr = list(attr)
+            __attr.append('SpawnerStyle.Object')
+
+            output = parse_simple(ss)
+            if output is None:
+                return None
             output['Type'] = 'Multiple'
             output['Path'] = '.'.join(__path)
             output['AttrBase'] = '.'.join(__attr)
             return {spawner_id: output}
+
+        def parse_spawnerstyle_bunchlist(idx):
+            ss = get_export_idx(self.data, idx)
+            ss_name= ss['_jwp_object_name']
+            output = {}
+            path.append(ss_name)
+            attr.append('')
+            for i, bunch in enumerate(ss.get('Bunches')):
+                attr[-1] = 'SpawnerStyle.Object.Bunches[{}]'.format(i)
+                bunch_output = parse_simple(bunch)
+                if bunch_output is None:
+                    continue
+                bunch_output['Type'] = 'Multiple'
+                bunch_output['Path'] = '.'.join(path)
+                bunch_output['AttrBase'] = '.'.join(attr)
+                index_key = '{sid}__bunch_{index}'.format(
+                    sid=spawner_id,
+                    index=i
+                )
+                output[index_key] = bunch_output
+            return output
 
         def parse_noop(idx):
             return None
@@ -176,6 +205,7 @@ class MapSpawnParser(object):
         def get_spawnerstyle_parser(type):
             func_map = {'SpawnerStyle_Den': parse_spawnerstyle_den,
                         'SpawnerStyle_Bunch': parse_spawnerstyle_den,
+                        'SpawnerStyle_BunchList': parse_spawnerstyle_bunchlist,
                         'SpawnerStyle_Encounter': parse_spawnerstyle_encounter,
                         'SpawnerStyle_Single': parse_spawnerstyle_single,
                         'OakSpawnerStyle_PlayerInstanced': parse_noop}
