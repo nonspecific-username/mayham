@@ -95,6 +95,8 @@ class MapSpawnParser(object):
                wtype, widx = get_spawnerstyle_info(wave)
                func = get_spawnerstyle_parser(wtype)
                wave_output = func(widx)
+               if wave_output is None:
+                   continue
                index_key = '{sid}__wave_{index}'.format(
                    sid=spawner_id,
                    index=i
@@ -111,11 +113,18 @@ class MapSpawnParser(object):
             __attr = list(attr)
             __attr.append('SpawnerStyle.Object')
             spawnopts = ss.get(__so)
+            if spawnopts is None:
+                msg = ("WARNING: spawner {} doesn't have SpawnOptions "
+                       "defined, skipping...")
+                print(msg.format(spawner_id))
+                return None
             so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
         
             # Special case: Spawners can be used to place dynamic objects like lootables
             # we need to filter these out
             if 'Enemies' not in so_str:
+                msg = "WARNING: spawner {} is not an enemy spawner, skipping..."
+                print(msg.format(spawner_id))
                 return None
         
             output = {}
@@ -137,11 +146,18 @@ class MapSpawnParser(object):
             __attr = list(attr)
             __attr.append('SpawnerStyle.Object')
             spawnopts = ss.get(__so)
+            if spawnopts is None:
+                msg = ("WARNING: spawner {} doesn't have SpawnOptions "
+                       "defined, skipping...")
+                print(msg.format(spawner_id))
+                return None
             so_str = '{path}.{export}'.format(path=spawnopts[1], export=spawnopts[0])
         
             # Special case: Spawners can be used to place dynamic objects like lootables
             # we need to filter these out
             if 'Enemies' not in so_str:
+                msg = "WARNING: spawner {} is not an enemy spawner, skipping..."
+                print(msg.format(spawner_id))
                 return None
 
             output = {}
@@ -154,18 +170,27 @@ class MapSpawnParser(object):
             output['AttrBase'] = '.'.join(__attr)
             return {spawner_id: output}
 
+        def parse_noop(idx):
+            return None
+
         def get_spawnerstyle_parser(type):
             func_map = {'SpawnerStyle_Den': parse_spawnerstyle_den,
                         'SpawnerStyle_Bunch': parse_spawnerstyle_den,
                         'SpawnerStyle_Encounter': parse_spawnerstyle_encounter,
-                        'SpawnerStyle_Single': parse_spawnerstyle_single}
+                        'SpawnerStyle_Single': parse_spawnerstyle_single,
+                        'OakSpawnerStyle_PlayerInstanced': parse_noop}
             return func_map[type]
 
         # Find our SpawnerComponent by it's export index
         sc_idx = spawner.get('SpawnerComponent').get('export')
         sc = get_export_idx(self.data, sc_idx)
-        ss_type, ss_idx = get_spawnerstyle_info(sc)
-        print(self.map_base_path)
+        try:
+            ss_type, ss_idx = get_spawnerstyle_info(sc)
+        except AttributeError as e:
+            msg = ("WARNING: skipping Spawner {} since it's "
+                   "SpawnerComponent has no SpawnerStyle attached")
+            print(msg.format(spawner.get('_jwp_object_name')))
+            return None
         ss_func = get_spawnerstyle_parser(ss_type)
         ss = ss_func(ss_idx)
         return ss
@@ -186,6 +211,7 @@ if __name__ == '__main__':
             data = f.read().splitlines()
         basepath = data[0]
         for filepath in data[1:]:
+            print("INFO: processing {}".format(filepath))
             msp = MapSpawnParser(filepath, basepath)
             output = deepmerge.always_merger.merge(output, msp.parse())
     elif args.target == 'single':
