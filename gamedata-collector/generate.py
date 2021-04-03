@@ -69,8 +69,11 @@ class MapSpawnParser(object):
     def parse(self):
         nonmission_data = self.parse_spawners('OakSpawner')
         mission_data = self.parse_spawners('OakMissionSpawner')
+        spawn_anchor_data = self.parse_spawners('Spawner_SpawnAnchor_C')
         all_spawners = deepmerge.always_merger.merge(mission_data,
                                                      nonmission_data)
+        all_spawners = deepmerge.always_merger.merge(all_spawners,
+                                                     spawn_anchor_data)
         output = {
             self.package: {
                 self.map_name: all_spawners
@@ -80,7 +83,7 @@ class MapSpawnParser(object):
 
     def build_spawner_info(self, spawner):
         spawner_id = spawner['_jwp_object_name']
-        path = [self.spawners_base_path, spawner_id]
+        path = [self.spawners_base_path, spawner_id, 'SpawnerComponent']
         attr = ['SpawnerComponent.Object.']
 
         def parse_spawnerstyle_encounter(idx):
