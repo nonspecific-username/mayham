@@ -1,9 +1,9 @@
 #!/bin/bash
 
 
-GAMEDATA_PATH=$1
-OUTPUT_FILE=$2
-JWP_CMD='wine64 /home/dn/projects/bl3/jwp/apo-jwp.exe'
+GAMEDATA_PATH=${GAMEDATA_PATH}
+OUTPUT_FILE=${OUTPUT_FILE}
+JWP_CMD=${JWP_CMD:-"wine64 /home/dn/projects/bl3/jwp/apo-jwp.exe"}
 WINDEBUG=fixme-all
 
 
