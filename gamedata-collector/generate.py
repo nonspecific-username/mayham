@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import argparse
 import sys
 
@@ -9,16 +11,29 @@ import yaml
 
 
 parser = argparse.ArgumentParser(description='Generate spawn data')
-subparsers = parser.add_subparsers(dest='target')
-subparsers.required=True
-single_p = subparsers.add_parser('single', help='Parse a single file')
-list_p = subparsers.add_parser('list', help='Parse a file list')
-single_p.add_argument('base_path', metavar='base-path', type=str,
+top_subparsers = parser.add_subparsers(dest='target')
+top_subparsers.required=True
+
+spawners_p = top_subparsers.add_parser('spawners', help='Generate spawners data')
+spawnopts_p = top_subparsers.add_parser('spawnoptions', help='Generate spawnoptions data')
+
+spwn_subparsers = spawners_p.add_subparsers(dest='spawners_target')
+
+sp_single_p = spwn_subparsers.add_parser('single', help='Parse a single file')
+sp_list_p = spwn_subparsers.add_parser('list', help='Parse a file list')
+sp_single_p.add_argument('base_path', metavar='base-path', type=str,
                     help='base game path')
-single_p.add_argument('json_path', metavar='json-path', type=str,
+sp_single_p.add_argument('json_path', metavar='json-path', type=str,
                     help='path of a parsed json file')
-list_p.add_argument('list', metavar='list', type=str,
+sp_list_p.add_argument('list', metavar='list', type=str,
                     help='path of a file list to parse')
+
+sop_subparsers = spawnopts_p.add_subparsers(dest='spawnopts_target')
+sop_uncap_p = sop_subparsers.add_parser('uncap', help='Uncap AliveLimitParam')
+sop_uncap_p.add_argument('sop_uncap_list', metavar='list', type=str,
+                         help='path of a file list to parse')
+
+
 parser.add_argument('--output', type=str, help='file to write output to')
 args = parser.parse_args()
 
@@ -237,20 +252,136 @@ class MapSpawnParser(object):
                 output = deepmerge.always_merger.merge(output, sinfo)
         return output
 
+
+def render_bvc(num):
+    tpl = '(ValueType=Int,DisabledValueModes=102,ValueFlags=0,ValueMode=AttributeInitializationData,Range=(Value=1.000000,Variance=0.000000),AttributeInitializer=None,AttributeData=None,AttributeInitializationData=(BaseValueConstant={bvc}.000000,DataTableValue=(DataTable=None,RowName="",ValueName=""),BaseValueAttribute=None,AttributeInitializer=None,BaseValueScale=1.000000),BlackboardKey=(KeyName="",bRuntimeKey=False),Condition=None,Actor=None)'
+    return tpl.format(bvc=num)
+
+
+def render_bvc_patch(path, attribute, num,
+                     method='SparkEarlyLevelPatchEntry',
+                     matcher='MatchAll'):
+    output = [method,
+              '(1,1,0,{})'.format(matcher),
+              path,
+              attribute,
+              '0',
+              '',
+              render_bvc(int(num))]
+    return ','.join(output)
+
+
+def render_str_patch(path, attribute, tstring,
+                     method='SparkEarlyLevelPatchEntry',
+                     matcher='MatchAll'):
+    output = [method,
+              '(1,1,0,{})'.format(matcher),
+              path,
+              attribute,
+              '0',
+              '',
+              tstring]
+    return ','.join(output)
+
+
+def uncap_spawnoptions_limit(basepath, filepath):
+    output = []
+
+    chunks = filepath.split('/')
+    sop_base_path = filepath[len(basepath):].split('.')[0]
+    sop_export_name = chunks[-1].split('.')[0]
+    sop_full_path = '{}.{}'.format(sop_base_path,
+                                   sop_export_name)
+
+    with open(filepath, 'r') as f:
+        sop = json.load(f)
+
+    sopd = None
+    for exp in sop:
+        if 'export_type' not in exp or \
+           exp['export_type'] != 'SpawnOptionData':
+            continue
+        else:
+            sopd = exp
+
+    if not sopd or 'Options' not in sopd:
+        return None
+
+    for option in sopd['Options']:
+        attribute = 'Options.Options[{}].AliveLimitType'.format(
+            option['_jwp_arr_idx']
+        )
+        if 'AliveLimitType' in option and \
+           option['AliveLimitType'] != 'ESpawnLimitType::None':
+            output.append(render_str_patch(sop_full_path,
+                                           attribute,
+                                           'None'))
+    return output
+
+
+def uncap_spawnoptions_limit_old(basepath, filepath):
+    output = []
+
+    chunks = filepath.split('/')
+    sop_base_path = filepath[len(basepath):].split('.')[0]
+    sop_export_name = chunks[-1].split('.')[0]
+    sop_full_path = '{}.{}'.format(sop_base_path,
+                                   sop_export_name)
+
+    with open(filepath, 'r') as f:
+        sop = json.load(f)
+
+    sopd = None
+    for exp in sop:
+        if 'export_type' not in exp or \
+           exp['export_type'] != 'SpawnOptionData':
+            continue
+        else:
+            sopd = exp
+
+    if not sopd or 'Options' not in sopd:
+        return None
+
+    for option in sopd['Options']:
+        attribute = 'Options.Options[{}].AliveLimitParam'.format(
+            option['_jwp_arr_idx']
+        )
+        if 'AliveLimitType' in option and \
+           option['AliveLimitType'] != 'ESpawnLimitType::None':
+            output.append(render_bvc_patch(sop_full_path,
+                                           attribute,
+                                           1000))
+    return output
+
+
 if __name__ == '__main__':
     output = {}
-    if args.target == 'list':
-        with open(args.list, 'r') as f:
-            data = f.read().splitlines()
-        basepath = data[0]
-        for filepath in data[1:]:
-            print("INFO: processing {}".format(filepath))
-            msp = MapSpawnParser(filepath, basepath)
+    output_txt = ''
+    if args.target == 'spawners':
+        if args.spawners_target == 'list':
+            with open(args.list, 'r') as f:
+                data = f.read().splitlines()
+            basepath = data[0]
+            for filepath in data[1:]:
+                print("INFO: processing spawners in {}".format(filepath))
+                msp = MapSpawnParser(filepath, basepath)
+                output = deepmerge.always_merger.merge(output, msp.parse())
+        elif args.spawners_target == 'single':
+            msp = MapSpawnParser(args.json_path, args.base_path)
             output = deepmerge.always_merger.merge(output, msp.parse())
-    elif args.target == 'single':
-        msp = MapSpawnParser(args.json_path, args.base_path)
-        output = deepmerge.always_merger.merge(output, msp.parse())
-    output_txt = yaml.dump(output)
+            output_txt = yaml.dump(output)
+    elif args.target == 'spawnoptions':
+        if args.spawnopts_target == 'uncap':
+            with open(args.sop_uncap_list, 'r') as f:
+                data = f.read().splitlines()
+            out_lines = []
+            basepath = data[0]
+            for filepath in data[1:]:
+                print("INFO: processing spawnoptions in {}".format(filepath))
+                lines = uncap_spawnoptions_limit(basepath, filepath)
+                if lines:
+                    out_lines += lines
+            output_txt = '\n'.join(out_lines)
     if args.output is not None:
         with open(args.output, 'w+') as f:
             f.write(output_txt)
