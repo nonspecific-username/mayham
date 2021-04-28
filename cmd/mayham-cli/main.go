@@ -5,7 +5,20 @@ import (
     "fmt"
 
     "github.com/nonspecific-username/mayham/hotfix"
+    "github.com/nonspecific-username/mayham/dsl"
 )
+
+
+var test_data string = `
+SpawnNum:
+- spawn:
+    pkg: Game
+    map: ".*"
+    spawn: ".*"
+  mode: factor
+  param1: 5
+  max_actors_mode: match
+`
 
 
 func main() {
@@ -26,5 +39,8 @@ func main() {
                    0,
                    "",
                    hotfix.RenderBVCOverride(300))
+
     fmt.Printf(hf.Render() + "\n")
+    cfg, _ := dsl.Load(test_data)
+    fmt.Println(*cfg)
 }
