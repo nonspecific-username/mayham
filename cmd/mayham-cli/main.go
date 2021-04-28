@@ -9,13 +9,22 @@ import (
 
 
 func main() {
-    var hf hotfix.Hotfix = hotfix.Regular{Method: "SparkEarlyLevelPatchEntry",
-                                          Notify: 0,
-                                          Pkg: "MatchAll",
-                                          Object: "ObjectPath",
-                                          Attr: "Attr",
-                                          FromLen: 0,
-                                          From: "",
-                                          Value: hotfix.RenderBVCOverride(100)}
+    var hf hotfix.Hotfix
+    hf.AddRegular(hotfix.EarlyLevel,
+                   0,
+                   "MatchAll",
+                   "ObjectPath",
+                   "Attr",
+                   0,
+                   "",
+                   hotfix.RenderBVCOverride(100))
+    hf.AddRegular(hotfix.EarlyLevel,
+                   0,
+                   "MatchAll",
+                   "ObjectPath",
+                   "Attr",
+                   0,
+                   "",
+                   hotfix.RenderBVCOverride(300))
     fmt.Printf(hf.Render() + "\n")
 }

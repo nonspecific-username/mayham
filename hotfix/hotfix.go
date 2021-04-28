@@ -3,41 +3,31 @@ package hotfix
 
 import (
     "fmt"
+    "strings"
 )
 
 
-type Hotfix interface {
-    Render() string
+type HotfixMethod string
+
+const (
+    EarlyLevel HotfixMethod = "SparkEarlyLevelPatchEntry"
+)
+
+
+type Hotfix struct {
+    lines []string
 }
 
 
-type Regular struct {
-    Method string
-    Notify int
-    Pkg string
-    Object string
-    Attr string
-    FromLen int
-    From string
-    Value string
+func (hf* Hotfix) AddRegular(method HotfixMethod, notify int, pkg string, object string,
+                             attr string, fromLen int, from string, value string) {
+    hf.lines = append(hf.lines, fmt.Sprintf("%s,(1,1,%d,%s),%s,%s,%d,%s,%s", method, notify, pkg,
+                                            object, attr, fromLen, from, value))
 }
 
 
-type DataTable struct {
-    Method string
-    Notify int
-    Pkg string
-    Object string
-    Row string
-    Attr string
-    FromLen int
-    From string
-    Value string
-}
-
-
-func (hf Regular) Render() string {
-    return fmt.Sprintf("%s,(1,1,%d,%s),%s,%s,%d,%s,%s", hf.Method, hf.Notify, hf.Pkg, hf.Object, hf.Attr, hf.FromLen, hf.From, hf.Value)
+func (hf* Hotfix) Render() string {
+    return strings.Join(hf.lines, "\n")
 }
 
 
