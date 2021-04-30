@@ -2,7 +2,7 @@ package gamedata
 
 
 import (
-    //"log"
+    "log"
     "regexp"
 
     yaml "gopkg.in/yaml.v2"
@@ -22,25 +22,27 @@ type Spawner struct {
 }
 
 
-type SpawnerList struct {
-    Spawners map[string]map[string]map[string]*Spawner `yaml:"Spawners"`
-}
+type SpawnerList map[string]map[string]map[string]*Spawner
 
 
-var _spawnerList SpawnerList
+var spawnerList SpawnerList
 var unmarshalled bool = false
 
 
-func (list *SpawnerList) Lookup(selector *dsl.SpawnSelector) []*Spawner {
+// TODO: add regex error parsing
+func GetSpawners(selector *dsl.SpawnSelector) []*Spawner {
+    if !unmarshalled {
+        parseSpawnData()
+    }
     var output []*Spawner
-    for pkg, mapList := range (*list).Spawners {
-        matched, _ := regexp.MatchString(pkg, selector.Package)
+    for pkg, mapList := range spawnerList {
+        matched, _ := regexp.MatchString(selector.Package, pkg)
         if len(selector.Package) == 0 || matched {
             for mapName, spawners := range mapList {
-                matched, _ = regexp.MatchString(mapName, selector.Map)
+                matched, _ = regexp.MatchString(selector.Map, mapName)
                 if matched {
                     for spawnerName, spawner := range spawners {
-                        matched, _ = regexp.MatchString(spawnerName, selector.Spawn)
+                        matched, _ = regexp.MatchString(selector.Spawn, spawnerName)
                         if len(selector.Spawn) == 0 || matched {
                             output = append(output, spawner)
                         }
@@ -53,15 +55,11 @@ func (list *SpawnerList) Lookup(selector *dsl.SpawnSelector) []*Spawner {
 }
 
 
-func GetSpawnData() *SpawnerList {
-    if unmarshalled {
-        return &_spawnerList
+func parseSpawnData() {
+    spawnerList = make(map[string]map[string]map[string]*Spawner)
+    err := yaml.UnmarshalStrict([]byte(_spawnDataGenerated), &spawnerList)
+    if err != nil {
+        log.Fatal(err)
     }
-
-    _spawnerList.Spawners = make(map[string]map[string]map[string]*Spawner)
-    yaml.UnmarshalStrict([]byte(_spawnDataGenerated), _spawnerList)
-    //log.Fatal(err)
     unmarshalled = true
-
-    return &_spawnerList
 }
