@@ -7,7 +7,7 @@ import (
 
 
 type DSLConfig struct {
-    SpawnNum []SpawnNumModSpec `yaml:"SpawnNum"`
+    SpawnNum []SpawnNumMod `yaml:"SpawnNum"`
 }
 
 

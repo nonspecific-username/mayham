@@ -19,15 +19,15 @@ const (
 )
 
 
-type SpawnSelectorSpec struct {
+type SpawnSelector struct {
     Package string `yaml:"pkg",omitempty`
     Map string `yaml:"map"`
     Spawn string `yaml:"spawn",omitempty`
 }
 
 
-type SpawnNumModSpec struct {
-    Spawn SpawnSelectorSpec `yaml:"spawn"`
+type SpawnNumMod struct {
+    Spawn SpawnSelector `yaml:"spawn"`
     Mode SpawnNumMode `yaml:"mode"`
     Param1 float32 `yaml: "param1"`
     Param2 float32 `yaml: "param2",omitempty`

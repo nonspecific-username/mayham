@@ -6,13 +6,13 @@ import (
 
     "github.com/nonspecific-username/mayham/hotfix"
     "github.com/nonspecific-username/mayham/dsl"
+    "github.com/nonspecific-username/mayham/gamedata"
 )
 
 
 var test_data string = `
 SpawnNum:
 - spawn:
-    pkg: Game
     map: ".*"
     spawn: ".*"
   mode: factor
@@ -43,4 +43,6 @@ func main() {
     fmt.Printf(hf.Render() + "\n")
     cfg, _ := dsl.Load(test_data)
     fmt.Println(*cfg)
+
+    fmt.Println(*(gamedata.GetSpawnData()))
 }
