@@ -12,6 +12,7 @@ const (
 
 type SpawnNumMAMode string
 
+// TODO: add "absolute" mode
 const (
     MAScaled SpawnNumMAMode = "scaled"
     MAMatch SpawnNumMAMode = "match"
@@ -29,8 +30,8 @@ type SpawnSelector struct {
 type SpawnNumMod struct {
     Spawn SpawnSelector `yaml:"spawn"`
     Mode SpawnNumMode `yaml:"mode"`
-    Param1 float32 `yaml: "param1"`
-    Param2 float32 `yaml: "param2",omitempty`
+    Param1 int `yaml: "param1"`
+    Param2 int `yaml: "param2",omitempty`
     MaxActorsMode SpawnNumMAMode `yaml:"max_actors_mode",omitempty`
-    MaxActorsParam float32 `yaml:"max_actors_param",omitempty`
+    MaxActorsParam int `yaml:"max_actors_param",omitempty`
 }

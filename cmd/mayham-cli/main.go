@@ -7,13 +7,14 @@ import (
     "github.com/nonspecific-username/mayham/hotfix"
     "github.com/nonspecific-username/mayham/dsl"
     "github.com/nonspecific-username/mayham/gamedata"
+    "github.com/nonspecific-username/mayham/generator"
 )
 
 
 var test_data string = `
 SpawnNum:
 - spawn:
-    amap: ".*"
+    map: ".*"
   mode: factor
   param1: 5
   max_actors_mode: match
@@ -46,6 +47,8 @@ func main() {
     } else {
         fmt.Println(*cfg)
         fmt.Println(gamedata.GetSpawners(&(cfg.SpawnNum[0].Spawn)))
+        mod, _ := generator.Generate(cfg)
+        fmt.Println(mod)
     }
 
 }
