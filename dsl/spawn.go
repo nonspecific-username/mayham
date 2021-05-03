@@ -3,6 +3,7 @@ package dsl
 
 import (
     "errors"
+    "fmt"
 )
 
 
@@ -34,7 +35,7 @@ type SpawnSelector struct {
 
 
 type SpawnNumMod struct {
-    Spawn SpawnSelector `yaml:"spawn"`
+    Spawn *SpawnSelector `yaml:"spawn"`
     Mode SpawnNumMode `yaml:"mode"`
     Param1 int `yaml: "param1"`
     Param2 int `yaml: "param2",omitempty`
@@ -43,18 +44,58 @@ type SpawnNumMod struct {
 }
 
 
-func (mod *SpawnNumMod) Validate() error {
-    switch {
-    case mod.Mode == Random && mod.Param2 == 0:
-        msg := "\"param2\" is required when \"mode\" is \"random\""
-        return errors.New(msg)
-    case mod.MaxActorsMode == MAFactor && mod.MaxActorsParam == 0:
-        msg := "\"max_actors_param\" is required when \"max_actors_mode\" is \"factor\""
-        return errors.New(msg)
-    case mod.MaxActorsMode == MAAbsolute && mod.MaxActorsParam == 0:
-        msg := "\"max_actors_param\" is required when \"max_actors_mode\" is \"absolute\""
-        return errors.New(msg)
+func (mod *SpawnNumMod) Validate() *[]error {
+    var errorsOutput []error
+
+    switch mod.Mode {
+    case Factor, Absolute, Random:
+        break
     default:
+        msg := fmt.Sprintf("\"mode\" \"%s\" is invalid", mod.Mode)
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    switch mod.MaxActorsMode {
+    case MAScaled, MAMatch, MAFactor, MAAbsolute, "":
+        break
+    default:
+        msg := fmt.Sprintf("\"max_actors_mode\" \"%s\" is invalid", mod.MaxActorsMode)
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if mod.Spawn == nil {
+        msg := "\"spawn\" is required"
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if mod.Mode == "" {
+        msg  := "\"mode\" is required"
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if mod.Param1 == 0 {
+        msg  := "\"param1\" is required"
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if mod.Mode == Random && mod.Param2 == 0 {
+        msg  := "\"param2\" is required when \"mode\" is \"random\""
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if mod.MaxActorsMode == MAFactor && mod.MaxActorsParam == 0 {
+        msg  := "\"max_actors_param\" is required when \"max_actors_mode\" is \"factor\""
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if mod.MaxActorsMode == MAAbsolute && mod.MaxActorsParam == 0 {
+        msg  := "\"max_actors_param\" is required when \"max_actors_mode\" is \"absolute\""
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if len(errorsOutput) == 0 {
         return nil
     }
+
+    return &errorsOutput
 }

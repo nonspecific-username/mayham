@@ -43,7 +43,7 @@ func generateSpawnNumHotfix(hf *hotfix.Hotfix, spawner *gamedata.Spawner, numAct
 
 func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) {
     rand.Seed(time.Now().UnixNano())
-    spawners := gamedata.GetSpawners(&(mod.Spawn))
+    spawners := gamedata.GetSpawners(mod.Spawn)
 
     for _, spawner := range(spawners) {
         if spawner.Type == "Single" {

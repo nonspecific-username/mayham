@@ -34,10 +34,12 @@ func Load(input *[]byte) (*DSLConfig, error, *[]error) {
 func (cfg *DSLConfig) Validate() *[]error {
     var errorsOutput []error
     for i, mod := range(cfg.SpawnNum) {
-        err := mod.Validate()
-        if err != nil {
-            msg := fmt.Sprintf("SpawnNum[%d]: %v", i, err)
-            errorsOutput = append(errorsOutput, errors.New(msg))
+        errs := mod.Validate()
+        if errs != nil {
+            for _, e := range(*errs) {
+                msg := fmt.Sprintf("SpawnNum[%d]: %v", i, e)
+                errorsOutput = append(errorsOutput, errors.New(msg))
+            }
         }
     }
 
