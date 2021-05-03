@@ -7,15 +7,12 @@ import (
 )
 
 
-func Generate(cfg *dsl.DSLConfig) (string, error) {
+func Generate(cfg *dsl.DSLConfig) string {
     var hf hotfix.Hotfix
 
     for _, spawnNumMod := range(cfg.SpawnNum) {
-        err := generateSpawnNumMod(&hf, &spawnNumMod)
-        if err != nil {
-            return "", err
-        }
+        generateSpawnNumMod(&hf, &spawnNumMod)
     }
 
-    return hf.Render(), nil
+    return hf.Render()
 }

@@ -2,9 +2,6 @@ package generator
 
 
 import (
-    //"log"
-    "errors"
-    "fmt"
     "math/rand"
     "strconv"
     "time"
@@ -44,11 +41,11 @@ func generateSpawnNumHotfix(hf *hotfix.Hotfix, spawner *gamedata.Spawner, numAct
 }
 
 
-func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
+func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) {
     rand.Seed(time.Now().UnixNano())
     spawners := gamedata.GetSpawners(&(mod.Spawn))
 
-    for i, spawner := range(spawners) {
+    for _, spawner := range(spawners) {
         if spawner.Type == "Single" {
             continue
         }
@@ -61,10 +58,6 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
         case dsl.Absolute:
             numActors = mod.Param1
         case dsl.Random:
-            if mod.Param2 == 0 {
-                msg := fmt.Sprintf("SpawnNum[%d]: \"param2\" is required when \"mode\" is \"random\"", i)
-                return errors.New(msg)
-            }
             numActors = rand.Intn(mod.Param2 - mod.Param1 + 1) + mod.Param1
         }
 
@@ -74,17 +67,9 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
             prevMaxActors, _ := strconv.Atoi(spawner.MaxAliveActorsWhenThreatened)
             maxActors = prevMaxActors * int(numActors / prevNumActors)
         case dsl.MAFactor:
-            if mod.MaxActorsParam == 0 {
-                msg := fmt.Sprintf("SpawnNum[%d]: \"max_actors_param\" is required when \"max_actors_mode\" is \"factor\"", i)
-                return errors.New(msg)
-            }
             prevMaxActors, _ := strconv.Atoi(spawner.MaxAliveActorsWhenThreatened)
             maxActors = prevMaxActors * mod.MaxActorsParam
         case dsl.MAAbsolute:
-            if mod.MaxActorsParam == 0 {
-                msg := fmt.Sprintf("SpawnNum[%d]: \"max_actors_param\" is required when \"max_actors_mode\" is \"absolute\"", i)
-                return errors.New(msg)
-            }
             maxActors = mod.MaxActorsParam
         case dsl.MAMatch, "":
             maxActors = numActors
@@ -93,5 +78,5 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
         generateSpawnNumHotfix(hf, spawner, numActors, maxActors)
     }
 
-    return nil
+    return
 }

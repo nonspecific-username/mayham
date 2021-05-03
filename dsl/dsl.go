@@ -2,6 +2,9 @@ package dsl
 
 
 import (
+    "errors"
+    "fmt"
+
     yaml "gopkg.in/yaml.v2"
 )
 
@@ -11,13 +14,34 @@ type DSLConfig struct {
 }
 
 
-func Load(input *[]byte) (*DSLConfig, error) {
+func Load(input *[]byte) (*DSLConfig, error, *[]error) {
     cfg := &DSLConfig{}
     err := yaml.UnmarshalStrict(*input, cfg)
+
     if err != nil {
-        return nil, err
+        return nil, err, nil
     }
-    return cfg, nil
+
+    validationErrors := cfg.Validate()
+    if len(*validationErrors) > 0 {
+        return nil, errors.New("Failed to validate DSLConfig"), validationErrors
+    }
+
+    return cfg, nil, nil
+}
+
+
+func (cfg *DSLConfig) Validate() *[]error {
+    var errorsOutput []error
+    for i, mod := range(cfg.SpawnNum) {
+        err := mod.Validate()
+        if err != nil {
+            msg := fmt.Sprintf("SpawnNum[%d]: %v", i, err)
+            errorsOutput = append(errorsOutput, errors.New(msg))
+        }
+    }
+
+    return &errorsOutput
 }
 
 

@@ -1,6 +1,11 @@
 package dsl
 
 
+import (
+    "errors"
+)
+
+
 type SpawnNumMode string
 
 const (
@@ -35,4 +40,21 @@ type SpawnNumMod struct {
     Param2 int `yaml: "param2",omitempty`
     MaxActorsMode SpawnNumMAMode `yaml:"max_actors_mode",omitempty`
     MaxActorsParam int `yaml:"max_actors_param",omitempty`
+}
+
+
+func (mod *SpawnNumMod) Validate() error {
+    switch {
+    case mod.Mode == Random && mod.Param2 == 0:
+        msg := "\"param2\" is required when \"mode\" is \"random\""
+        return errors.New(msg)
+    case mod.MaxActorsMode == MAFactor && mod.MaxActorsParam == 0:
+        msg := "\"max_actors_param\" is required when \"max_actors_mode\" is \"factor\""
+        return errors.New(msg)
+    case mod.MaxActorsMode == MAAbsolute && mod.MaxActorsParam == 0:
+        msg := "\"max_actors_param\" is required when \"max_actors_mode\" is \"absolute\""
+        return errors.New(msg)
+    default:
+        return nil
+    }
 }
