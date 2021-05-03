@@ -68,13 +68,16 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
             numActors = rand.Intn(mod.Param2 - mod.Param1 + 1) + mod.Param1
         }
 
-        // TODO: check for maxactorsparam in mode is "factor"
         switch mod.MaxActorsMode {
         case dsl.MAScaled:
             prevNumActors, _ := strconv.Atoi(spawner.NumActorsParam)
             prevMaxActors, _ := strconv.Atoi(spawner.MaxAliveActorsWhenThreatened)
             maxActors = prevMaxActors * int(numActors / prevNumActors)
         case dsl.MAFactor:
+            if mod.MaxActorsParam == 0 {
+                msg := fmt.Sprintf("SpawnNum[%d]: \"max_actors_param\" is required when \"max_actors_mode\" is \"factor\"", i)
+                return errors.New(msg)
+            }
             prevMaxActors, _ := strconv.Atoi(spawner.MaxAliveActorsWhenThreatened)
             maxActors = prevMaxActors * mod.MaxActorsParam
         case dsl.MAMatch, "":
