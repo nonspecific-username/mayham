@@ -52,11 +52,11 @@ def get_export_idx(data, export_idx):
     return ret[0] if len(ret) > 0 else None
 
 
-def get_bvc(obj, param):
+def get_bvc(obj, param, ret_type=int):
     # strip BaseValueConstant from AttributeInitializationData for a param
     aid = 'AttributeInitializationData'
     bvc = 'BaseValueConstant'
-    return obj.get(param, {}).get(aid, {}).get(bvc, 1.0)
+    return ret_type(obj.get(param, {}).get(aid, {}).get(bvc, 1.0))
 
 
 def get_spawnerstyle_info(obj):
