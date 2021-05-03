@@ -2,53 +2,39 @@ package main
 
 
 import (
-    "fmt"
+    "io/ioutil"
+    "log"
+    "os"
 
-    "github.com/nonspecific-username/mayham/hotfix"
     "github.com/nonspecific-username/mayham/dsl"
-    "github.com/nonspecific-username/mayham/gamedata"
     "github.com/nonspecific-username/mayham/generator"
 )
 
 
-var test_data string = `
-SpawnNum:
-- spawn:
-    map: ".*"
-  mode: factor
-  param1: 5
-  max_actors_mode: match
-`
-
-
 func main() {
-    var hf hotfix.Hotfix
-    hf.AddRegular(hotfix.EarlyLevel,
-                   0,
-                   "MatchAll",
-                   "ObjectPath",
-                   "Attr",
-                   0,
-                   "",
-                   hotfix.RenderBVCOverride(100))
-    hf.AddRegular(hotfix.EarlyLevel,
-                   0,
-                   "MatchAll",
-                   "ObjectPath",
-                   "Attr",
-                   0,
-                   "",
-                   hotfix.RenderBVCOverride(300))
+    configs := os.Args[1:]
 
-    fmt.Printf(hf.Render() + "\n")
-    cfg, e := dsl.Load(test_data)
-    if e != nil {
-        fmt.Println(e)
-    } else {
-        fmt.Println(*cfg)
-        fmt.Println(gamedata.GetSpawners(&(cfg.SpawnNum[0].Spawn)))
-        mod, _ := generator.Generate(cfg)
-        fmt.Println(mod)
+    for _, confPath := range(configs) {
+        data, err := ioutil.ReadFile(confPath)
+        if err != nil {
+            log.Fatal("Error reading input file " + confPath)
+            log.Println(err)
+            return
+        }
+
+        cfg, err := dsl.Load(&data)
+        if err != nil {
+            log.Fatal("Error parsing input file " + confPath)
+            log.Println(err)
+            return
+        }
+
+        mod, err := generator.Generate(cfg)
+        if err != nil {
+            log.Fatal("Error generating hotfixes from input file " + confPath)
+            log.Println(err)
+            return
+        }
+        log.Println(mod)
     }
-
 }

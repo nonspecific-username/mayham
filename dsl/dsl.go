@@ -11,9 +11,9 @@ type DSLConfig struct {
 }
 
 
-func Load(input string) (*DSLConfig, error) {
+func Load(input *[]byte) (*DSLConfig, error) {
     cfg := &DSLConfig{}
-    err := yaml.UnmarshalStrict([]byte(input), cfg)
+    err := yaml.UnmarshalStrict(*input, cfg)
     if err != nil {
         return nil, err
     }
