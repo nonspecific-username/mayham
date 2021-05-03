@@ -17,23 +17,17 @@ func main() {
     for _, confPath := range(configs) {
         data, err := ioutil.ReadFile(confPath)
         if err != nil {
-            log.Fatal("Error reading input file " + confPath)
-            log.Println(err)
-            return
+            log.Fatalf("Error reading input file %s: %v", confPath, err)
         }
 
         cfg, err := dsl.Load(&data)
         if err != nil {
-            log.Fatal("Error parsing input file " + confPath)
-            log.Println(err)
-            return
+            log.Fatalf("Error parsing input file %s: %v", confPath, err)
         }
 
         mod, err := generator.Generate(cfg)
         if err != nil {
-            log.Fatal("Error generating hotfixes from input file " + confPath)
-            log.Println(err)
-            return
+            log.Fatalf("Error generating hotfixes from input file %s: %s", confPath, err)
         }
         log.Println(mod)
     }
