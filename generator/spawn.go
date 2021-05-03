@@ -3,6 +3,8 @@ package generator
 
 import (
     //"log"
+    "errors"
+    "fmt"
     "math/rand"
     "strconv"
     "time"
@@ -46,13 +48,12 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
     rand.Seed(time.Now().UnixNano())
     spawners := gamedata.GetSpawners(&(mod.Spawn))
 
-    for _, spawner := range(spawners) {
+    for i, spawner := range(spawners) {
         if spawner.Type == "Single" {
             continue
         }
         var numActors, maxActors int
 
-        // TODO: add a check for param2 if mode is "random"
         switch mod.Mode {
         case dsl.Factor:
             prevNumActors, _ := strconv.Atoi(spawner.NumActorsParam)
@@ -60,6 +61,10 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
         case dsl.Absolute:
             numActors = mod.Param1
         case dsl.Random:
+            if mod.Param2 == 0 {
+                msg := fmt.Sprintf("SpawnNum[%d]: \"param2\" is required when \"mode\" is \"random\"", i)
+                return errors.New(msg)
+            }
             numActors = rand.Intn(mod.Param2 - mod.Param1 + 1) + mod.Param1
         }
 
