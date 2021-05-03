@@ -17,6 +17,7 @@ const (
     MAScaled SpawnNumMAMode = "scaled"
     MAMatch SpawnNumMAMode = "match"
     MAFactor SpawnNumMAMode = "factor"
+    MAAbsolute SpawnNumMAMode = "absolute"
 )
 
 

@@ -80,6 +80,12 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) error {
             }
             prevMaxActors, _ := strconv.Atoi(spawner.MaxAliveActorsWhenThreatened)
             maxActors = prevMaxActors * mod.MaxActorsParam
+        case dsl.MAAbsolute:
+            if mod.MaxActorsParam == 0 {
+                msg := fmt.Sprintf("SpawnNum[%d]: \"max_actors_param\" is required when \"max_actors_mode\" is \"absolute\"", i)
+                return errors.New(msg)
+            }
+            maxActors = mod.MaxActorsParam
         case dsl.MAMatch, "":
             maxActors = numActors
         }
