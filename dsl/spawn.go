@@ -4,6 +4,7 @@ package dsl
 import (
     "errors"
     "fmt"
+    "regexp"
 )
 
 
@@ -44,8 +45,40 @@ type SpawnNumMod struct {
 }
 
 
+func (spawn *SpawnSelector) Validate() *[]error {
+    var errorsOutput []error
+
+    if spawn.Map == "" {
+        msg := "\"map\" is required"
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if _, err := regexp.Compile(spawn.Package); err != nil {
+        msg := fmt.Sprintf("\"package\" is an invalid regexp: %v", err)
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if _, err := regexp.Compile(spawn.Map); err != nil {
+        msg := fmt.Sprintf("\"map\" is an invalid regexp: %v", err)
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if _, err := regexp.Compile(spawn.Spawn); err != nil {
+        msg := fmt.Sprintf("\"spawn\" is an invalid regexp: %v", err)
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
+    if len(errorsOutput) == 0 {
+        return nil
+    }
+
+    return &errorsOutput
+}
+
+
 func (mod *SpawnNumMod) Validate() *[]error {
     var errorsOutput []error
+
 
     switch mod.Mode {
     case Factor, Absolute, Random:
@@ -66,6 +99,13 @@ func (mod *SpawnNumMod) Validate() *[]error {
     if mod.Spawn == nil {
         msg := "\"spawn\" is required"
         errorsOutput = append(errorsOutput, errors.New(msg))
+    } else {
+        if spawnSelectorErrors := mod.Spawn.Validate(); spawnSelectorErrors != nil {
+            for _, e := range(*spawnSelectorErrors) {
+                msg := fmt.Sprintf("\"spawn\": %v", e)
+                errorsOutput = append(errorsOutput, errors.New(msg))
+            }
+        }
     }
 
     if mod.Mode == "" {

@@ -1,8 +1,4 @@
 - grep -nr "TODO" ./
-- implement logging
-- implement a working CLI
-- better error handling
-- logging
 - generate gamedata into *.go files
 - test coverage
 - add ability to uncap spawners with limits
