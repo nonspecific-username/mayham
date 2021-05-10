@@ -29,7 +29,6 @@ var spawnerList SpawnerList
 var unmarshalled bool = false
 
 
-// TODO: add regex error parsing
 func GetSpawners(selector *dsl.SpawnSelector) []*Spawner {
     if !unmarshalled {
         parseSpawnData()

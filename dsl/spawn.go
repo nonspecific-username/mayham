@@ -14,12 +14,12 @@ const (
     Factor SpawnNumMode = "factor"
     Absolute SpawnNumMode = "absolute"
     Random SpawnNumMode = "random"
+    RandomFactor SpawnNumMode = "randomfactor"
 )
 
 
 type SpawnNumMAMode string
 
-// TODO: add "absolute" mode
 const (
     MAScaled SpawnNumMAMode = "scaled"
     MAMatch SpawnNumMAMode = "match"
@@ -81,7 +81,7 @@ func (mod *SpawnNumMod) Validate() *[]error {
 
 
     switch mod.Mode {
-    case Factor, Absolute, Random:
+    case Factor, Absolute, Random, RandomFactor:
         break
     default:
         msg := fmt.Sprintf("\"mode\" \"%s\" is invalid", mod.Mode)
@@ -118,8 +118,8 @@ func (mod *SpawnNumMod) Validate() *[]error {
         errorsOutput = append(errorsOutput, errors.New(msg))
     }
 
-    if mod.Mode == Random && mod.Param2 == 0 {
-        msg  := "\"param2\" is required when \"mode\" is \"random\""
+    if (mod.Mode == Random || mod.Mode == RandomFactor) && mod.Param2 == 0 {
+        msg  := "\"param2\" is required when \"mode\" is either \"random\" or \"randomfactor\""
         errorsOutput = append(errorsOutput, errors.New(msg))
     }
 

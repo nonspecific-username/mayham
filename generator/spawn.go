@@ -67,6 +67,9 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) {
             numActors = mod.Param1
         case dsl.Random:
             numActors = rand.Intn(mod.Param2 - mod.Param1 + 1) + mod.Param1
+        case dsl.RandomFactor:
+            prevNumActors, _ := strconv.Atoi(spawner.NumActorsParam)
+            numActors = (rand.Intn(mod.Param2 - mod.Param1 + 1) + mod.Param1) * prevNumActors
         }
 
         switch mod.MaxActorsMode {
