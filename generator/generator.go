@@ -10,6 +10,10 @@ import (
 func Generate(cfg *dsl.DSLConfig) string {
     var hf hotfix.Hotfix
 
+    if len(cfg.SpawnNum) > 0 {
+        generateSpawnUncapMod(&hf)
+    }
+
     for _, spawnNumMod := range(cfg.SpawnNum) {
         generateSpawnNumMod(&hf, &spawnNumMod)
     }

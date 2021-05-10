@@ -4,6 +4,7 @@ package generator
 import (
     "math/rand"
     "strconv"
+    "strings"
     "time"
 
     "github.com/nonspecific-username/mayham/dsl"
@@ -38,6 +39,13 @@ func generateSpawnNumHotfix(hf *hotfix.Hotfix, spawner *gamedata.Spawner, numAct
                    0,
                    "",
                    hotfix.RenderBVCOverride(maxActors))
+}
+
+
+func generateSpawnUncapMod(hf *hotfix.Hotfix) {
+    for _, line := range(strings.Split(_spawnOptionUncapModGenerated, "\n")) {
+        hf.AddRaw(line)
+    }
 }
 
 

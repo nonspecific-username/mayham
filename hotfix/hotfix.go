@@ -26,6 +26,11 @@ func (hf* Hotfix) AddRegular(method HotfixMethod, notify int, pkg string, object
 }
 
 
+func (hf* Hotfix) AddRaw(line string) {
+    hf.lines = append(hf.lines, line)
+}
+
+
 func (hf* Hotfix) Render() string {
     return strings.Join(hf.lines, "\n")
 }

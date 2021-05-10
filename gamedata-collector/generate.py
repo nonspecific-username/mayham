@@ -387,6 +387,10 @@ if __name__ == '__main__':
                 if lines:
                     out_lines += lines
             output_txt = '\n'.join(out_lines)
+        if args.golang:
+            output_txt = ("package generator\n\n"
+                          "var _spawnOptionUncapModGenerated = `\n"
+                          "{}\n`").format(output_txt)
     if args.output is not None:
         with open(args.output, 'w+') as f:
             f.write(output_txt)
