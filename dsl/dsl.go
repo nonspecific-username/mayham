@@ -10,6 +10,8 @@ import (
 
 
 type DSLConfig struct {
+    Name string `yaml:"name",omitempty`
+    Description string `yaml:"Description"`
     SpawnNum []SpawnNumMod `yaml:"SpawnNum"`
 }
 
@@ -33,6 +35,12 @@ func Load(input *[]byte) (*DSLConfig, error, *[]error) {
 
 func (cfg *DSLConfig) Validate() *[]error {
     var errorsOutput []error
+
+    if cfg.Name == "" {
+        msg := "\"name\" is required"
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
     for i, mod := range(cfg.SpawnNum) {
         errs := mod.Validate()
         if errs != nil {
