@@ -35,6 +35,7 @@ sop_uncap_p.add_argument('sop_uncap_list', metavar='list', type=str,
 
 
 parser.add_argument('--output', type=str, help='file to write output to')
+parser.add_argument('--golang', action='store_true', help='file to write output to')
 args = parser.parse_args()
 
 
@@ -370,6 +371,10 @@ if __name__ == '__main__':
             msp = MapSpawnParser(args.json_path, args.base_path)
             output = deepmerge.always_merger.merge(output, msp.parse())
             output_txt = yaml.dump(output)
+        if args.golang:
+            output_txt = ("package gamedata\n\n"
+                          "var _spawnDataGenerated = `\n"
+                          "{}\n`").format(output_txt)
     elif args.target == 'spawnoptions':
         if args.spawnopts_target == 'uncap':
             with open(args.sop_uncap_list, 'r') as f:
