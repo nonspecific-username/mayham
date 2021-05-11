@@ -1,3 +1,4 @@
 *.sw?
 gamedata/generated_*.go
 generator/generated_*.go
+build/

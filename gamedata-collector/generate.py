@@ -370,7 +370,8 @@ if __name__ == '__main__':
         elif args.spawners_target == 'single':
             msp = MapSpawnParser(args.json_path, args.base_path)
             output = deepmerge.always_merger.merge(output, msp.parse())
-            output_txt = yaml.dump(output)
+
+        output_txt = yaml.dump(output)
         if args.golang:
             output_txt = ("package gamedata\n\n"
                           "var _spawnDataGenerated = `\n"
