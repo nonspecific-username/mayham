@@ -8,6 +8,10 @@ import (
 
 
 func Generate(cfg *dsl.DSLConfig) string {
+    if !cfg.Enabled {
+        return ""
+    }
+
     var hf hotfix.Hotfix
 
     if len(cfg.SpawnNum) > 0 {
@@ -15,7 +19,9 @@ func Generate(cfg *dsl.DSLConfig) string {
     }
 
     for _, spawnNumMod := range(cfg.SpawnNum) {
-        generateSpawnNumMod(&hf, &spawnNumMod)
+        if spawnNumMod.Enabled {
+            generateSpawnNumMod(&hf, &spawnNumMod)
+        }
     }
 
     return hf.Render()

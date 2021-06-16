@@ -36,6 +36,7 @@ type SpawnSelector struct {
 
 
 type SpawnNumMod struct {
+    Enabled bool `yaml:"enabled"`
     Spawn *SpawnSelector `yaml:"spawn"`
     Mode SpawnNumMode `yaml:"mode"`
     Param1 int `yaml: "param1"`

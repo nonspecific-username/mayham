@@ -12,6 +12,7 @@ import (
 type DSLConfig struct {
     Name string `yaml:"name",omitempty`
     Description string `yaml:"Description"`
+    Enabled bool `yaml:"enabled"`
     SpawnNum []SpawnNumMod `yaml:"SpawnNum"`
 }
 
