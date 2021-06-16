@@ -53,6 +53,11 @@ cli:
 	go build -o build/mayham-cli cmd/mayham-cli/main.go
 
 
+.PHONY: web
+web:
+	go build -o build/mayham-web cmd/mayham-web/main.go
+
+
 .PHONY: cli-full
 cli-full: generate-gamedata cli
 

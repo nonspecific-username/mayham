@@ -12,6 +12,11 @@ import (
 type MultiDSLConfig map[string]*DSLConfig
 
 
+func NewMulti() MultiDSLConfig {
+    cfg := make(map[string]*DSLConfig)
+    return cfg
+}
+
 func LoadMulti(input *[]byte) (MultiDSLConfig, error, *[]error) {
     var errorsOutput []error
     cfg := make(map[string]*DSLConfig)
