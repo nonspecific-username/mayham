@@ -124,6 +124,11 @@ func (mod *SpawnNumMod) Validate() *[]error {
         errorsOutput = append(errorsOutput, errors.New(msg))
     }
 
+    if (mod.Mode == Random || mod.Mode == RandomFactor) && mod.Param1 >= mod.Param2 {
+        msg  := "\"param1\" must be less than \"param2\" when \"mode\" is either \"random\" or \"randomfactor\""
+        errorsOutput = append(errorsOutput, errors.New(msg))
+    }
+
     if mod.MaxActorsMode == MAFactor && mod.MaxActorsParam == 0 {
         msg  := "\"max_actors_param\" is required when \"max_actors_mode\" is \"factor\""
         errorsOutput = append(errorsOutput, errors.New(msg))
