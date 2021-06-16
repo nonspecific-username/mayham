@@ -11,9 +11,9 @@ import (
 
 type DSLConfig struct {
     Name string `yaml:"name",omitempty`
-    Description string `yaml:"Description"`
+    Description string `yaml:"description"`
     Enabled bool `yaml:"enabled"`
-    SpawnNum []SpawnNumMod `yaml:"SpawnNum"`
+    SpawnNum []SpawnNumMod `yaml:"spawn_num"`
 }
 
 
