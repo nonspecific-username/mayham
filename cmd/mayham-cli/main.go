@@ -25,7 +25,7 @@ func main() {
             continue
         }
 
-        cfg, err, validationErrors := dsl.Load(&data)
+        cfg, err, validationErrors := dsl.NewDSLConfig().FromYAML(&data)
         if err != nil {
             haveErrors = true
             log.Printf("Error parsing input file %s: %v:", confPath, err)
@@ -45,4 +45,5 @@ func main() {
     for _, cfg := range(dslConfigs) {
         fmt.Println(generator.Generate(cfg))
     }
+
 }
