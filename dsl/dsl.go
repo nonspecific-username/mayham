@@ -19,8 +19,7 @@ type ModConfig struct {
 
 
 func NewModConfig() *ModConfig {
-    cfg := &ModConfig{}
-    return cfg
+    return &ModConfig{}
 }
 
 
