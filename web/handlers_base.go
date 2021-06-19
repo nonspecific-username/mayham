@@ -15,6 +15,7 @@ import (
 
 
 const (
+    templateBadIdx string = "Error: bad index: %d"
     templateMod404 string = "Error: mod with id: %s doesn't exist"
 )
 
