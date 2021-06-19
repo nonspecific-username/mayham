@@ -14,13 +14,13 @@ func Generate(cfg *dsl.ModConfig) string {
 
     var hf hotfix.Hotfix
 
-    if len(cfg.SpawnNum) > 0 {
+    if len(cfg.NumActors) > 0 {
         generateSpawnUncapMod(&hf)
     }
 
-    for _, spawnNumMod := range(cfg.SpawnNum) {
+    for _, spawnNumMod := range(cfg.NumActors) {
         if spawnNumMod.Enabled {
-            generateSpawnNumMod(&hf, &spawnNumMod)
+            generateNumActorsMod(&hf, &spawnNumMod)
         }
     }
 

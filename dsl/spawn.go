@@ -8,23 +8,23 @@ import (
 )
 
 
-type SpawnNumMode string
+type NumActorsMode string
 
 const (
-    Factor SpawnNumMode = "factor"
-    Absolute SpawnNumMode = "absolute"
-    Random SpawnNumMode = "random"
-    RandomFactor SpawnNumMode = "randomfactor"
+    Factor NumActorsMode = "factor"
+    Absolute NumActorsMode = "absolute"
+    Random NumActorsMode = "random"
+    RandomFactor NumActorsMode = "randomfactor"
 )
 
 
-type SpawnNumMAMode string
+type NumActorsMAMode string
 
 const (
-    MAScaled SpawnNumMAMode = "scaled"
-    MAMatch SpawnNumMAMode = "match"
-    MAFactor SpawnNumMAMode = "factor"
-    MAAbsolute SpawnNumMAMode = "absolute"
+    MAScaled NumActorsMAMode = "scaled"
+    MAMatch NumActorsMAMode = "match"
+    MAFactor NumActorsMAMode = "factor"
+    MAAbsolute NumActorsMAMode = "absolute"
 )
 
 
@@ -35,13 +35,13 @@ type SpawnSelector struct {
 }
 
 
-type SpawnNumMod struct {
+type NumActorsMod struct {
     Enabled bool `yaml:"enabled" json:"enabled"`
     Spawn *SpawnSelector `yaml:"spawn" json:"spawn"`
-    Mode SpawnNumMode `yaml:"mode" json:"mode"`
+    Mode NumActorsMode `yaml:"mode" json:"mode"`
     Param1 int `yaml: "param1" json:"param1"`
     Param2 int `yaml: "param2",omitempty json:"param2"`
-    MaxActorsMode SpawnNumMAMode `yaml:"max_actors_mode",omitempty json:"max_actors_mode"`
+    MaxActorsMode NumActorsMAMode `yaml:"max_actors_mode",omitempty json:"max_actors_mode"`
     MaxActorsParam int `yaml:"max_actors_param",omitempty json:"max_actors_param"`
 }
 
@@ -77,7 +77,7 @@ func (spawn *SpawnSelector) Validate() *[]error {
 }
 
 
-func (mod *SpawnNumMod) Validate() *[]error {
+func (mod *NumActorsMod) Validate() *[]error {
     var errorsOutput []error
 
 

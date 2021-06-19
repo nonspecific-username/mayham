@@ -14,7 +14,7 @@ type ModConfig struct {
     Name string `yaml:"name",omitempty json:"name"`
     Description string `yaml:"description" json:"description"`
     Enabled bool `yaml:"enabled" json:"enabled"`
-    SpawnNum []SpawnNumMod `yaml:"spawn_num" json:"spawn_num"`
+    NumActors []NumActorsMod `yaml:"num_actors" json:"num_actors"`
 }
 
 
@@ -64,11 +64,11 @@ func (cfg *ModConfig) Validate() *[]error {
         errorsOutput = append(errorsOutput, errors.New(msg))
     }
 
-    for i, mod := range(cfg.SpawnNum) {
+    for i, mod := range(cfg.NumActors) {
         errs := mod.Validate()
         if errs != nil {
             for _, e := range(*errs) {
-                msg := fmt.Sprintf("SpawnNum[%d]: %v", i, e)
+                msg := fmt.Sprintf("NumActors[%d]: %v", i, e)
                 errorsOutput = append(errorsOutput, errors.New(msg))
             }
         }

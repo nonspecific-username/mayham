@@ -14,7 +14,7 @@ import (
 
 
 
-func generateSpawnNumHotfix(hf *hotfix.Hotfix, spawner *gamedata.Spawner, numActors int, maxActors int) {
+func generateNumActorsHotfix(hf *hotfix.Hotfix, spawner *gamedata.Spawner, numActors int, maxActors int) {
     hf.AddRegular(hotfix.EarlyLevel,
                    0,
                    "MatchAll",
@@ -49,7 +49,7 @@ func generateSpawnUncapMod(hf *hotfix.Hotfix) {
 }
 
 
-func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) {
+func generateNumActorsMod(hf *hotfix.Hotfix, mod *dsl.NumActorsMod) {
     rand.Seed(time.Now().UnixNano())
     spawners := gamedata.GetSpawners(mod.Spawn)
 
@@ -86,7 +86,7 @@ func generateSpawnNumMod(hf *hotfix.Hotfix, mod *dsl.SpawnNumMod) {
             maxActors = numActors
         }
 
-        generateSpawnNumHotfix(hf, spawner, numActors, maxActors)
+        generateNumActorsHotfix(hf, spawner, numActors, maxActors)
     }
 
     return

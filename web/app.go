@@ -48,12 +48,12 @@ func Init() error {
     g.PUT("/mod/:mod", handleUpdateMod)
     g.DELETE("/mod/:mod", handleDeleteMod)
 
-    g.GET("/mod/:mod/spawnnum/", handleGetSpawnNumModList)
-    g.POST("/mod/:mod/spawnnum/", handleCreateSpawnNumMod)
+    g.GET("/mod/:mod/spawnnum/", handleGetNumActorsModList)
+    g.POST("/mod/:mod/spawnnum/", handleCreateNumActorsMod)
 
-    g.GET("/mod/:mod/spawnnum/:idx/", handleGetSpawnNumMod)
-    g.PUT("/mod/:mod/spawnnum/:idx/", handleUpdateSpawnNumMod)
-    g.DELETE("/mod/:mod/spawnnum/:idx/", handleDeleteSpawnNumMod)
+    g.GET("/mod/:mod/spawnnum/:idx/", handleGetNumActorsMod)
+    g.PUT("/mod/:mod/spawnnum/:idx/", handleUpdateNumActorsMod)
+    g.DELETE("/mod/:mod/spawnnum/:idx/", handleDeleteNumActorsMod)
 
     return g.Run("localhost:8300")
 }
