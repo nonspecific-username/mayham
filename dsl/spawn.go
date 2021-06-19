@@ -2,9 +2,12 @@ package dsl
 
 
 import (
+    "encoding/json"
     "errors"
     "fmt"
     "regexp"
+
+    yaml "gopkg.in/yaml.v2"
 )
 
 
@@ -46,6 +49,57 @@ type NumActorsMod struct {
 }
 
 
+func NewSpawnSelector() *SpawnSelector {
+    return &SpawnSelector{}
+}
+
+
+func (selector *SpawnSelector) FromYAML(input *[]byte) (*SpawnSelector, error, *[]error) {
+    err := yaml.UnmarshalStrict(*input, selector)
+
+    if err != nil {
+        return nil, err, nil
+    }
+
+    validationErrors := selector.Validate()
+    if len(*validationErrors) > 0 {
+        return nil, errors.New("Failed to validate SpawnSelector"), validationErrors
+    }
+
+    return selector, nil, nil
+}
+
+
+func (selector *SpawnSelector) FromJSON(input *[]byte) (*SpawnSelector, error, *[]error) {
+    err := json.Unmarshal(*input, selector)
+
+    if err != nil {
+        return nil, err, nil
+    }
+
+    validationErrors := selector.Validate()
+    if len(*validationErrors) > 0 {
+        return nil, errors.New("Failed to validate SpawnSelector"), validationErrors
+    }
+
+    return selector, nil, nil
+}
+
+
+func (selector SpawnSelector) YAML() string {
+    str, _ := yaml.Marshal(selector)
+
+    return string(str)
+}
+
+
+func (selector SpawnSelector) JSON() string {
+    str, _ := json.Marshal(selector)
+
+    return string(str)
+}
+
+
 func (spawn *SpawnSelector) Validate() *[]error {
     var errorsOutput []error
 
@@ -74,6 +128,57 @@ func (spawn *SpawnSelector) Validate() *[]error {
     }
 
     return &errorsOutput
+}
+
+
+func NewNumActorsMod() *NumActorsMod {
+    return &NumActorsMod{}
+}
+
+
+func (mod *NumActorsMod) FromYAML(input *[]byte) (*NumActorsMod, error, *[]error) {
+    err := yaml.UnmarshalStrict(*input, mod)
+
+    if err != nil {
+        return nil, err, nil
+    }
+
+    validationErrors := mod.Validate()
+    if len(*validationErrors) > 0 {
+        return nil, errors.New("Failed to validate NumActorsMod"), validationErrors
+    }
+
+    return mod, nil, nil
+}
+
+
+func (mod *NumActorsMod) FromJSON(input *[]byte) (*NumActorsMod, error, *[]error) {
+    err := json.Unmarshal(*input, mod)
+
+    if err != nil {
+        return nil, err, nil
+    }
+
+    validationErrors := mod.Validate()
+    if len(*validationErrors) > 0 {
+        return nil, errors.New("Failed to validate NumActorsMod"), validationErrors
+    }
+
+    return mod, nil, nil
+}
+
+
+func (mod NumActorsMod) YAML() string {
+    str, _ := yaml.Marshal(mod)
+
+    return string(str)
+}
+
+
+func (mod NumActorsMod) JSON() string {
+    str, _ := json.Marshal(mod)
+
+    return string(str)
 }
 
 
