@@ -11,8 +11,9 @@ import (
 
 
 type ModConfig struct {
-    Name string `yaml:"name",omitempty json:"name"`
+    Name string `yaml:"name" json:"name"`
     Description string `yaml:"description" json:"description"`
+    Author string `yaml:"author" json:"author"`
     Enabled bool `yaml:"enabled" json:"enabled"`
     NumActors []NumActorsMod `yaml:"num_actors" json:"num_actors"`
 }
