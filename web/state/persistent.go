@@ -14,8 +14,8 @@ var (
 )
 
 
-func PersistentState(path string) (*MultiDSLConfig, error, *[]error) {
-    var cfg MultiDSLConfig
+func PersistentState(path string) (*MultiModConfig, error, *[]error) {
+    var cfg MultiModConfig
     var errs *[]error
     if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
         cfg = NewMulti()

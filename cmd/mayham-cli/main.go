@@ -14,7 +14,7 @@ import (
 
 func main() {
     configs := os.Args[1:]
-    var dslConfigs []*dsl.DSLConfig
+    var dslConfigs []*dsl.ModConfig
     var haveErrors bool = false
 
     for _, confPath := range(configs) {
@@ -25,7 +25,7 @@ func main() {
             continue
         }
 
-        cfg, err, validationErrors := dsl.NewDSLConfig().FromYAML(&data)
+        cfg, err, validationErrors := dsl.NewModConfig().FromYAML(&data)
         if err != nil {
             haveErrors = true
             log.Printf("Error parsing input file %s: %v:", confPath, err)

@@ -7,7 +7,7 @@ import (
 )
 
 
-func Generate(cfg *dsl.DSLConfig) string {
+func Generate(cfg *dsl.ModConfig) string {
     if !cfg.Enabled {
         return ""
     }

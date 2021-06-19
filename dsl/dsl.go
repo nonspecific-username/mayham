@@ -10,7 +10,7 @@ import (
 )
 
 
-type DSLConfig struct {
+type ModConfig struct {
     Name string `yaml:"name",omitempty json:"name"`
     Description string `yaml:"description" json:"description"`
     Enabled bool `yaml:"enabled" json:"enabled"`
@@ -18,13 +18,13 @@ type DSLConfig struct {
 }
 
 
-func NewDSLConfig() *DSLConfig {
-    cfg := &DSLConfig{}
+func NewModConfig() *ModConfig {
+    cfg := &ModConfig{}
     return cfg
 }
 
 
-func (cfg *DSLConfig) FromYAML(input *[]byte) (*DSLConfig, error, *[]error) {
+func (cfg *ModConfig) FromYAML(input *[]byte) (*ModConfig, error, *[]error) {
     err := yaml.UnmarshalStrict(*input, cfg)
 
     if err != nil {
@@ -33,14 +33,14 @@ func (cfg *DSLConfig) FromYAML(input *[]byte) (*DSLConfig, error, *[]error) {
 
     validationErrors := cfg.Validate()
     if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate DSLConfig"), validationErrors
+        return nil, errors.New("Failed to validate ModConfig"), validationErrors
     }
 
     return cfg, nil, nil
 }
 
 
-func (cfg *DSLConfig) FromJSON(input *[]byte) (*DSLConfig, error, *[]error) {
+func (cfg *ModConfig) FromJSON(input *[]byte) (*ModConfig, error, *[]error) {
     err := json.Unmarshal(*input, cfg)
 
     if err != nil {
@@ -49,14 +49,14 @@ func (cfg *DSLConfig) FromJSON(input *[]byte) (*DSLConfig, error, *[]error) {
 
     validationErrors := cfg.Validate()
     if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate DSLConfig"), validationErrors
+        return nil, errors.New("Failed to validate ModConfig"), validationErrors
     }
 
     return cfg, nil, nil
 }
 
 
-func (cfg *DSLConfig) Validate() *[]error {
+func (cfg *ModConfig) Validate() *[]error {
     var errorsOutput []error
 
     if cfg.Name == "" {
@@ -78,14 +78,14 @@ func (cfg *DSLConfig) Validate() *[]error {
 }
 
 
-func (cfg DSLConfig) YAML() string {
+func (cfg ModConfig) YAML() string {
     str, _ := yaml.Marshal(cfg)
 
     return string(str)
 }
 
 
-func (cfg DSLConfig) JSON() string {
+func (cfg ModConfig) JSON() string {
     str, _ := json.Marshal(cfg)
 
     return string(str)

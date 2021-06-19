@@ -10,7 +10,7 @@ import (
 )
 
 var (
-    runtimeCfg *state.MultiDSLConfig
+    runtimeCfg *state.MultiModConfig
 )
 
 
