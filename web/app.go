@@ -51,9 +51,9 @@ func Init() error {
     g.GET("/mod/:mod/numactors/", handleGetNumActorsModList)
     g.POST("/mod/:mod/numactors/", handleCreateNumActorsMod)
 
-    g.GET("/mod/:mod/numactors/:idx/", handleGetNumActorsMod)
-    g.PUT("/mod/:mod/numactors/:idx/", handleUpdateNumActorsMod)
-    g.DELETE("/mod/:mod/numactors/:idx/", handleDeleteNumActorsMod)
+    g.GET("/mod/:mod/numactors/:idx", handleGetNumActorsMod)
+    g.PUT("/mod/:mod/numactors/:idx", handleUpdateNumActorsMod)
+    g.DELETE("/mod/:mod/numactors/:idx", handleDeleteNumActorsMod)
 
     return g.Run("localhost:8300")
 }
