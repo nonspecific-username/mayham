@@ -1,12 +1,10 @@
-package persistent
+package state
 
 
 import (
     "io/ioutil"
     "time"
     "os"
-
-    "github.com/nonspecific-username/mayham/dsl"
 )
 
 
@@ -16,18 +14,18 @@ var (
 )
 
 
-func Open(path string) (*dsl.MultiDSLConfig, error, *[]error) {
-    var cfg dsl.MultiDSLConfig
+func PersistentState(path string) (*MultiDSLConfig, error, *[]error) {
+    var cfg MultiDSLConfig
     var errs *[]error
     if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
-        cfg = dsl.NewMulti()
+        cfg = NewMulti()
     } else {
         data, err := ioutil.ReadFile(path)
         if err != nil {
             return nil, err, nil
         }
 
-        cfg, err, errs = dsl.LoadMulti(&data)
+        cfg, err, errs = LoadMultiYAML(&data)
         if err != nil {
             return nil, err, errs
         }
@@ -44,7 +42,7 @@ func Open(path string) (*dsl.MultiDSLConfig, error, *[]error) {
                 ticker.Stop()
                 return
             case <- syncCh:
-                newData := cfg.String()
+                newData := cfg.YAML()
                 ioutil.WriteFile(path, []byte(newData), 0644)
             case <-ticker.C:
             }
@@ -55,7 +53,7 @@ func Open(path string) (*dsl.MultiDSLConfig, error, *[]error) {
 }
 
 
-func Close() {
+func ClosePersistentState() {
     Sync()
     time.Sleep(time.Second)
     stopCh <- true

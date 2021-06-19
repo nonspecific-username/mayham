@@ -4,14 +4,13 @@ package web
 import (
     "log"
 
-    "github.com/nonspecific-username/mayham/persistent"
-    "github.com/nonspecific-username/mayham/dsl"
+    "github.com/nonspecific-username/mayham/web/state"
 
     "github.com/gin-gonic/gin"
 )
 
 var (
-    runtimeCfg *dsl.MultiDSLConfig
+    runtimeCfg *state.MultiDSLConfig
 )
 
 
@@ -25,7 +24,7 @@ func Init() error {
     var err error
     var validationErrors *[]error
 
-    runtimeCfg, err, validationErrors = persistent.Open(cfgFilename)
+    runtimeCfg, err, validationErrors = state.PersistentState(cfgFilename)
     if err != nil {
         log.Printf("Error parsing input file %s: %v:", cfgFilename, err)
         if validationErrors != nil && len(*validationErrors) > 0 {
@@ -61,5 +60,5 @@ func Init() error {
 
 
 func Close() {
-    persistent.Close()
+    state.ClosePersistentState()
 }

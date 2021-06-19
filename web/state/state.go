@@ -1,25 +1,28 @@
-package dsl
+package state
 
 
 import (
+    "encoding/json"
     "errors"
     "fmt"
 
     yaml "gopkg.in/yaml.v2"
+
+    "github.com/nonspecific-username/mayham/dsl"
 )
 
 
-type MultiDSLConfig map[string]*DSLConfig
+type MultiDSLConfig map[string]*dsl.DSLConfig
 
 
 func NewMulti() MultiDSLConfig {
-    cfg := make(map[string]*DSLConfig)
+    cfg := make(map[string]*dsl.DSLConfig)
     return cfg
 }
 
-func LoadMulti(input *[]byte) (MultiDSLConfig, error, *[]error) {
+func LoadMultiYAML(input *[]byte) (MultiDSLConfig, error, *[]error) {
     var errorsOutput []error
-    cfg := make(map[string]*DSLConfig)
+    cfg := make(map[string]*dsl.DSLConfig)
     err := yaml.UnmarshalStrict(*input, cfg)
 
     if err != nil {
@@ -44,8 +47,15 @@ func LoadMulti(input *[]byte) (MultiDSLConfig, error, *[]error) {
 }
 
 
-func (cfg MultiDSLConfig) String() string {
+func (cfg MultiDSLConfig) YAML() string {
     str, _ := yaml.Marshal(cfg)
+
+    return string(str)
+}
+
+
+func (cfg MultiDSLConfig) JSON() string {
+    str, _ := json.Marshal(cfg)
 
     return string(str)
 }
