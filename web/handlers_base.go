@@ -2,6 +2,7 @@ package web
 
 
 import (
+    "errors"
     "log"
     "fmt"
 
@@ -28,6 +29,15 @@ type updateModRequest struct {
     Description string `json:"description"`
     Author string `json:"author"`
     Enabled bool `json:"enabled"`
+}
+
+
+func checkModPath(c *gin.Context, key string) error {
+    if _, ok := (*runtimeCfg)[key]; !ok {
+        c.Data(404, gin.MIMEHTML, []byte(fmt.Sprintf(templateMod404, key)))
+        return errors.New("")
+    }
+    return nil
 }
 
 
@@ -89,12 +99,13 @@ func handleGetMod(c *gin.Context) {
     log.Printf("handleGetMod")
 
     key := c.Param("mod")
-
-    if mod, ok := (*runtimeCfg)[key]; ok {
-        c.JSON(200, mod)
-    } else {
-        c.Data(404, gin.MIMEHTML, []byte(fmt.Sprintf(templateMod404, key)))
+    err := checkModPath(c, key)
+    if err != nil {
+        return
     }
+
+    mod := (*runtimeCfg)[key]
+    c.JSON(200, mod)
 }
 
 
@@ -102,15 +113,15 @@ func handleUpdateMod(c *gin.Context) {
     log.Printf("handleUpdateMod")
 
     key := c.Param("mod")
-
-    mod, ok := (*runtimeCfg)[key]
-    if !ok {
-        c.Data(404, gin.MIMEHTML, []byte(fmt.Sprintf(templateMod404, key)))
+    err := checkModPath(c, key)
+    if err != nil {
         return
     }
 
+    mod := (*runtimeCfg)[key]
+
     req := &updateModRequest{}
-    err := c.BindJSON(req)
+    err = c.BindJSON(req)
     if err != nil {
         msg := fmt.Sprintf("%v", err)
         c.Data(400, gin.MIMEHTML, []byte(msg))
@@ -142,13 +153,13 @@ func handleDeleteMod(c *gin.Context) {
     log.Printf("handleDeleteMod")
 
     key := c.Param("mod")
-
-    if _, ok := (*runtimeCfg)[key]; ok {
-        delete(*runtimeCfg, key)
-        state.Sync()
-        c.Data(204, gin.MIMEHTML, nil)
-    } else {
-        c.Data(404, gin.MIMEHTML, []byte(fmt.Sprintf(templateMod404, key)))
+    err := checkModPath(c, key)
+    if err != nil {
+        return
     }
+
+    delete(*runtimeCfg, key)
+    state.Sync()
+    c.Data(204, gin.MIMEHTML, nil)
 
 }
