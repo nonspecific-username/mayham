@@ -55,7 +55,7 @@ func handleCreateMod(c *gin.Context) {
 
     cfg := dsl.NewModConfig()
 
-    err = bindFunc[ct](c, &cfg)
+    err = bindFunc[ct](c, cfg)
     if err != nil {
         return
     }
@@ -71,8 +71,7 @@ func handleCreateMod(c *gin.Context) {
         key := uuid.New().String()
         (*runtimeCfg)[key] = cfg
         state.Sync()
-        resp := &modCreatedResponse{Id: key}
-        respFunc[ct](c, 200, resp)
+        respFunc[ct](c, 200, &modCreatedResponse{Id: key})
     }
 }
 
