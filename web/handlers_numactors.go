@@ -5,6 +5,7 @@ import (
     "log"
 
     //apierrors "github.com/nonspecific-username/mayham/web/errors"
+    "github.com/nonspecific-username/mayham/web/state"
 
     "github.com/gin-gonic/gin"
 )
@@ -64,4 +65,23 @@ func handleUpdateNumActorsMod(c *gin.Context) {
 
 func handleDeleteNumActorsMod(c *gin.Context) {
     log.Printf("handleDeleteNumActorsMod")
+
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
+    key := c.Param("mod")
+    idxStr := c.Param("idx")
+    idx, err := checkNumActorsPath(c, ct, key, idxStr)
+    if err != nil {
+        return
+    }
+
+    (*runtimeCfg)[key].NumActors = append(
+        (*runtimeCfg)[key].NumActors[:idx],
+        (*runtimeCfg)[key].NumActors[idx+1:]...
+    )
+    state.Sync()
+    c.Data(204, gin.MIMEHTML, nil)
 }
