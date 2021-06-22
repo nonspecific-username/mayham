@@ -3,8 +3,10 @@ package web
 
 import (
     "log"
+    "fmt"
 
-    //apierrors "github.com/nonspecific-username/mayham/web/errors"
+    "github.com/nonspecific-username/mayham/dsl"
+    apierrors "github.com/nonspecific-username/mayham/web/errors"
     "github.com/nonspecific-username/mayham/web/state"
 
     "github.com/gin-gonic/gin"
@@ -36,6 +38,37 @@ func handleGetNumActorsModList(c *gin.Context) {
 
 func handleCreateNumActorsMod(c *gin.Context) {
     log.Printf("handleCreateNumActorsMod")
+
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
+    key := c.Param("mod")
+    err = checkModPath(c, ct, key)
+    if err != nil {
+        return
+    }
+
+    mod := dsl.NewNumActorsMod()
+    err = bindFunc[ct](c, mod)
+    if err != nil {
+        return
+    }
+
+    validationErrors := mod.Validate()
+    if validationErrors != nil && len(*validationErrors) > 0 {
+        msg := "Failed to validate the input data"
+        for _, valErr := range(*validationErrors) {
+            msg = fmt.Sprintf("%s%v\n", msg, valErr)
+        }
+        respFunc[ct](c, 400, apierrors.InvalidValue("numactors", msg))
+    } else {
+        (*runtimeCfg)[key].NumActors = append((*runtimeCfg)[key].NumActors, *mod)
+        state.Sync()
+        idxStr := fmt.Sprintf("%d", len((*runtimeCfg)[key].NumActors) - 1)
+        respFunc[ct](c, 200, &modCreatedResponse{Id: idxStr})
+    }
 }
 
 
