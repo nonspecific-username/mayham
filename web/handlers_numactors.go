@@ -3,16 +3,12 @@ package web
 
 import (
     "errors"
-    "fmt"
     "log"
     "strconv"
 
+    apierrors "github.com/nonspecific-username/mayham/web/errors"
+
     "github.com/gin-gonic/gin"
-)
-
-
-const (
-    templateNumActors404 string = "Error: mod with id: %s doesn't contain NumActors with index: %d"
 )
 
 
@@ -23,14 +19,18 @@ func checkNumActorsPath(c *gin.Context, key string, idx string) (int, error) {
     }
 
     intIdx, err := strconv.Atoi(idx)
+    if err != nil {
+        c.JSON(400, apierrors.ParseError("index", idx))
+        return -1, errors.New("")
+    }
 
     if intIdx < 0 {
-        c.Data(404, gin.MIMEHTML, []byte(fmt.Sprintf(templateBadIdx, intIdx)))
+        c.JSON(400, apierrors.InvalidValue("index", idx))
         return -1, errors.New("")
     }
 
     if intIdx > len((*runtimeCfg)[key].NumActors) - 1 {
-        c.Data(404, gin.MIMEHTML, []byte(fmt.Sprintf(templateNumActors404, key, intIdx)))
+        c.JSON(400, apierrors.NotFound("index", idx))
         return -1, errors.New("")
     }
 

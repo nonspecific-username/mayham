@@ -8,15 +8,10 @@ import (
 
     "github.com/nonspecific-username/mayham/dsl"
     "github.com/nonspecific-username/mayham/web/state"
+    apierrors "github.com/nonspecific-username/mayham/web/errors"
 
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
-)
-
-
-const (
-    templateBadIdx string = "Error: bad index: %d"
-    templateMod404 string = "Error: mod with id: %s doesn't exist"
 )
 
 
@@ -35,7 +30,7 @@ type updateModRequest struct {
 
 func checkModPath(c *gin.Context, key string) error {
     if _, ok := (*runtimeCfg)[key]; !ok {
-        c.Data(404, gin.MIMEHTML, []byte(fmt.Sprintf(templateMod404, key)))
+        c.JSON(404, apierrors.NotFound("mod", key))
         return errors.New("")
     }
     return nil
@@ -70,12 +65,10 @@ func handleCreateMod(c *gin.Context) {
     case "application/x-yaml":
         err = c.BindYAML(cfg)
     default:
-        msg := fmt.Sprintf("Unsupported content-type %s", contentType)
-        c.Data(400, gin.MIMEHTML, []byte(msg))
+        c.JSON(400, apierrors.UnsupportedContentType(contentType))
     }
     if err != nil {
-        msg := fmt.Sprintf("%v", err)
-        c.Data(400, gin.MIMEHTML, []byte(msg))
+        c.JSON(400, apierrors.ParseError("unmarshalError", fmt.Sprintf("%v", err)))
         return
     }
 
@@ -85,7 +78,7 @@ func handleCreateMod(c *gin.Context) {
         for _, valErr := range(*validationErrors) {
             msg = fmt.Sprintf("%s%v\n", msg, valErr)
         }
-        c.Data(400, gin.MIMEHTML, []byte(msg))
+        c.JSON(400, apierrors.InvalidValue("mod", msg))
     } else {
         key := uuid.New().String()
         (*runtimeCfg)[key] = cfg
@@ -124,8 +117,7 @@ func handleUpdateMod(c *gin.Context) {
     req := &updateModRequest{}
     err = c.BindJSON(req)
     if err != nil {
-        msg := fmt.Sprintf("%v", err)
-        c.Data(400, gin.MIMEHTML, []byte(msg))
+        c.JSON(400, apierrors.ParseError("unmarshalError", fmt.Sprintf("%v", err)))
         return
     }
 
