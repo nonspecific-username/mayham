@@ -2,47 +2,24 @@ package web
 
 
 import (
-    "errors"
     "log"
-    "strconv"
 
-    apierrors "github.com/nonspecific-username/mayham/web/errors"
+    //apierrors "github.com/nonspecific-username/mayham/web/errors"
 
     "github.com/gin-gonic/gin"
 )
 
 
-func checkNumActorsPath(c *gin.Context, key string, idx string) (int, error) {
-    err := checkModPath(c, key)
-    if err != nil {
-        return -1, err
-    }
-
-    intIdx, err := strconv.Atoi(idx)
-    if err != nil {
-        c.JSON(400, apierrors.ParseError("index", idx))
-        return -1, errors.New("")
-    }
-
-    if intIdx < 0 {
-        c.JSON(400, apierrors.InvalidValue("index", idx))
-        return -1, errors.New("")
-    }
-
-    if intIdx > len((*runtimeCfg)[key].NumActors) - 1 {
-        c.JSON(400, apierrors.NotFound("index", idx))
-        return -1, errors.New("")
-    }
-
-    return intIdx, nil
-}
-
-
 func handleGetNumActorsModList(c *gin.Context) {
     log.Printf("handleGetNumActorsModList")
 
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
     key := c.Param("mod")
-    err := checkModPath(c, key)
+    err = checkModPath(c, ct, key)
     if err != nil {
         return
     }
@@ -52,7 +29,7 @@ func handleGetNumActorsModList(c *gin.Context) {
         indices = append(indices, idx)
     }
 
-    c.JSON(200, &indices)
+    respFunc[ct](c, 200, &indices)
 }
 
 
@@ -64,14 +41,19 @@ func handleCreateNumActorsMod(c *gin.Context) {
 func handleGetNumActorsMod(c *gin.Context) {
     log.Printf("handleGetNumActorsMod")
 
-    key := c.Param("mod")
-    idxStr := c.Param("idx")
-    idx, err := checkNumActorsPath(c, key, idxStr)
+    ct, err := checkContentType(c)
     if err != nil {
         return
     }
 
-    c.JSON(200, (*runtimeCfg)[key].NumActors[idx])
+    key := c.Param("mod")
+    idxStr := c.Param("idx")
+    idx, err := checkNumActorsPath(c, ct, key, idxStr)
+    if err != nil {
+        return
+    }
+
+    respFunc[ct](c, 200, (*runtimeCfg)[key].NumActors[idx])
 }
 
 

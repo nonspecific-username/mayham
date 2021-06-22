@@ -2,7 +2,6 @@ package web
 
 
 import (
-    "errors"
     "log"
     "fmt"
 
@@ -28,24 +27,20 @@ type updateModRequest struct {
 }
 
 
-func checkModPath(c *gin.Context, key string) error {
-    if _, ok := (*runtimeCfg)[key]; !ok {
-        c.JSON(404, apierrors.NotFound("mod", key))
-        return errors.New("")
-    }
-    return nil
-}
-
-
 func handleGetModList(c *gin.Context) {
     log.Printf("handleGetModList")
+
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
 
     mods := make([]string, 0, len(*runtimeCfg))
     for mod := range *runtimeCfg {
         mods = append(mods, mod)
     }
 
-    c.JSON(200, &mods)
+    respFunc[ct](c, 200, &mods)
 }
 
 
@@ -53,22 +48,15 @@ func handleCreateMod(c *gin.Context) {
     log.Printf("handleCreateMod")
     var err error
 
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
     cfg := dsl.NewModConfig()
 
-    /* The one and only case when we're willing to accept a yaml
-       via the API request: create a new mod. This is only useful
-       for importing new mods. */
-    contentType := c.ContentType()
-    switch contentType {
-    case "application/json":
-        err = c.BindJSON(cfg)
-    case "application/x-yaml":
-        err = c.BindYAML(cfg)
-    default:
-        c.JSON(400, apierrors.UnsupportedContentType(contentType))
-    }
+    err = bindFunc[ct](c, &cfg)
     if err != nil {
-        c.JSON(400, apierrors.ParseError("unmarshalError", fmt.Sprintf("%v", err)))
         return
     }
 
@@ -78,13 +66,13 @@ func handleCreateMod(c *gin.Context) {
         for _, valErr := range(*validationErrors) {
             msg = fmt.Sprintf("%s%v\n", msg, valErr)
         }
-        c.JSON(400, apierrors.InvalidValue("mod", msg))
+        respFunc[ct](c, 400, apierrors.InvalidValue("mod", msg))
     } else {
         key := uuid.New().String()
         (*runtimeCfg)[key] = cfg
         state.Sync()
         resp := &modCreatedResponse{Id: key}
-        c.JSON(200, resp)
+        respFunc[ct](c, 200, resp)
     }
 }
 
@@ -92,22 +80,32 @@ func handleCreateMod(c *gin.Context) {
 func handleGetMod(c *gin.Context) {
     log.Printf("handleGetMod")
 
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
     key := c.Param("mod")
-    err := checkModPath(c, key)
+    err = checkModPath(c, ct, key)
     if err != nil {
         return
     }
 
     mod := (*runtimeCfg)[key]
-    c.JSON(200, mod)
+    respFunc[ct](c, 200, mod)
 }
 
 
 func handleUpdateMod(c *gin.Context) {
     log.Printf("handleUpdateMod")
 
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
     key := c.Param("mod")
-    err := checkModPath(c, key)
+    err = checkModPath(c, ct, key)
     if err != nil {
         return
     }
@@ -115,9 +113,8 @@ func handleUpdateMod(c *gin.Context) {
     mod := (*runtimeCfg)[key]
 
     req := &updateModRequest{}
-    err = c.BindJSON(req)
+    err = bindFunc[ct](c, &req)
     if err != nil {
-        c.JSON(400, apierrors.ParseError("unmarshalError", fmt.Sprintf("%v", err)))
         return
     }
 
@@ -145,8 +142,13 @@ func handleUpdateMod(c *gin.Context) {
 func handleDeleteMod(c *gin.Context) {
     log.Printf("handleDeleteMod")
 
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
     key := c.Param("mod")
-    err := checkModPath(c, key)
+    err = checkModPath(c, ct, key)
     if err != nil {
         return
     }
