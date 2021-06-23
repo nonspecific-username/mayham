@@ -15,15 +15,15 @@ import (
 
 
 type modCreatedResponse struct {
-    Id string `json:"id"`
+    Id string `yaml:"id" json:"id"`
 }
 
 
 type updateModRequest struct {
-    Name string `json:"name"`
-    Description string `json:"description"`
-    Author string `json:"author"`
-    Enabled bool `json:"enabled"`
+    Name string `yaml:"name" json:"name"`
+    Description string `yaml: "description" json:"description"`
+    Author string `yaml:"author" json:"author"`
+    Enabled bool `yaml:"enabled" json:"enabled"`
 }
 
 
@@ -95,8 +95,8 @@ func handleGetMod(c *gin.Context) {
 }
 
 
-func handleUpdateMod(c *gin.Context) {
-    log.Printf("handleUpdateMod")
+func handleBulkUpdateMod(c *gin.Context) {
+    log.Printf("handleBulkUpdateMod")
 
     ct, err := checkContentType(c)
     if err != nil {
@@ -135,6 +135,34 @@ func handleUpdateMod(c *gin.Context) {
 
     state.Sync()
     c.Data(200, gin.MIMEHTML, nil)
+}
+
+
+func handleUpdateMod(c *gin.Context) {
+    log.Printf("handleUpdateMod")
+
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
+    key := c.Param("mod")
+    tgt := c.Param("target")
+    err = checkModPath(c, ct, key)
+    if err != nil {
+        return
+    }
+
+    req := &updateFieldRequest{}
+    err = bindFunc[ct](c, &req)
+    if err != nil {
+        return
+    }
+
+    err = updateObjectField(c, ct, (*runtimeCfg)[key], tgt, req.Value)
+    if err != nil {
+        return
+    }
 }
 
 

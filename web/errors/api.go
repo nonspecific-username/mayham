@@ -40,3 +40,10 @@ func UnsupportedContentType(value string) *badRequest {
                        Value: value,
                        Description: "Unsupported content-type"}
 }
+
+
+func NoSuchField(obj string, value string) *badRequest {
+    return &badRequest{Object: obj,
+                       Value: value,
+                       Description: "No such field"}
+}

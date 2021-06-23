@@ -15,7 +15,7 @@ type ModConfig struct {
     Description string `yaml:"description" json:"description"`
     Author string `yaml:"author" json:"author"`
     Enabled bool `yaml:"enabled" json:"enabled"`
-    NumActors []NumActorsMod `yaml:"num_actors" json:"num_actors"`
+    NumActors []NumActorsMod `yaml:"num_actors" json:"num_actors" singleUpdate:"no"`
 }
 
 

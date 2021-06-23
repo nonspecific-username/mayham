@@ -45,14 +45,16 @@ func Init() error {
     g.POST("/mod/", handleCreateMod)
 
     g.GET("/mod/:mod", handleGetMod)
-    g.PUT("/mod/:mod", handleUpdateMod)
+    g.PUT("/mod/:mod", handleBulkUpdateMod)
+    g.PUT("/mod/:mod/:target", handleUpdateMod)
     g.DELETE("/mod/:mod", handleDeleteMod)
 
     g.GET("/mod/:mod/numactors/", handleGetNumActorsModList)
     g.POST("/mod/:mod/numactors/", handleCreateNumActorsMod)
 
     g.GET("/mod/:mod/numactors/:idx", handleGetNumActorsMod)
-    g.PUT("/mod/:mod/numactors/:idx", handleUpdateNumActorsMod)
+    g.PUT("/mod/:mod/numactors/:idx", handleBulkUpdateNumActorsMod)
+    g.PUT("/mod/:mod/numactors/:idx/:target", handleUpdateNumActorsMod)
     g.DELETE("/mod/:mod/numactors/:idx", handleDeleteNumActorsMod)
 
     return g.Run("localhost:8300")

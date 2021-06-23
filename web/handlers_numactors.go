@@ -91,8 +91,37 @@ func handleGetNumActorsMod(c *gin.Context) {
 }
 
 
+func handleBulkUpdateNumActorsMod(c *gin.Context) {
+    log.Printf("handleBulkUpdateNumActorsMod")
+}
+
+
 func handleUpdateNumActorsMod(c *gin.Context) {
     log.Printf("handleUpdateNumActorsMod")
+
+    ct, err := checkContentType(c)
+    if err != nil {
+        return
+    }
+
+    key := c.Param("mod")
+    idxStr := c.Param("idx")
+    tgt := c.Param("target")
+    idx, err := checkNumActorsPath(c, ct, key, idxStr)
+    if err != nil {
+        return
+    }
+
+    req := &updateFieldRequest{}
+    err = bindFunc[ct](c, &req)
+    if err != nil {
+        return
+    }
+
+    err = updateObjectField(c, ct, &((*runtimeCfg)[key].NumActors[idx]), tgt, req.Value)
+    if err != nil {
+        return
+    }
 }
 
 
