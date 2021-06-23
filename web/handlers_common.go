@@ -71,47 +71,49 @@ func yamlBind(c *gin.Context, obj interface{}) error {
 
 
 func checkContentType(c *gin.Context) (string, error) {
-    contentType := c.ContentType()
-    switch contentType {
+    ct := c.ContentType()
+    switch ct {
     case ctJSON, ctYAML:
-        return contentType, nil
+        return ct, nil
     case "":
         return ctJSON, nil
     default:
-        c.JSON(400, apierrors.UnsupportedContentType(contentType))
+        c.JSON(400, apierrors.UnsupportedContentType(ct))
         return "", errors.New("")
     }
 }
 
 
-func checkModPath(c *gin.Context, contentType string, key string) error {
+func checkModPath(c *gin.Context, key string) error {
+    ct := c.ContentType()
     if _, ok := (*runtimeCfg)[key]; !ok {
-        c.JSON(404, apierrors.NotFound("mod", key))
+        respFunc[ct](c, 404, apierrors.NotFound("mod", key))
         return errors.New("")
     }
     return nil
 }
 
 
-func checkNumActorsPath(c *gin.Context, contentType string, key string, idx string) (int, error) {
-    err := checkModPath(c, contentType, key)
+func checkNumActorsPath(c *gin.Context, key string, idx string) (int, error) {
+    ct := c.ContentType()
+    err := checkModPath(c, key)
     if err != nil {
         return -1, err
     }
 
     intIdx, err := strconv.Atoi(idx)
     if err != nil {
-        respFunc[contentType](c, 400, apierrors.ParseError("index", idx))
+        respFunc[ct](c, 400, apierrors.ParseError("index", idx))
         return -1, errors.New("")
     }
 
     if intIdx < 0 {
-        respFunc[contentType](c, 400, apierrors.InvalidValue("index", idx))
+        respFunc[ct](c, 400, apierrors.InvalidValue("index", idx))
         return -1, errors.New("")
     }
 
     if intIdx > len((*runtimeCfg)[key].NumActors) - 1 {
-        respFunc[contentType](c, 400, apierrors.NotFound("index", idx))
+        respFunc[ct](c, 400, apierrors.NotFound("index", idx))
         return -1, errors.New("")
     }
 
@@ -119,7 +121,8 @@ func checkNumActorsPath(c *gin.Context, contentType string, key string, idx stri
 }
 
 
-func updateObjectField(c *gin.Context, contentType string, obj interface {}, fieldTag string, newValue string) error {
+func updateObjectField(c *gin.Context, obj interface {}, fieldTag string, newValue string) error {
+    ct := c.ContentType()
     // obj MUST be a pointer, otherwise this will crash and burn
     vOrig := reflect.ValueOf(obj).Elem()
     t := vOrig.Type()
@@ -133,7 +136,7 @@ func updateObjectField(c *gin.Context, contentType string, obj interface {}, fie
     // Find the target field
     for i := 0; i < t.NumField(); i++ {
         f := t.Field(i)
-        tag, ok := f.Tag.Lookup(tagType[contentType])
+        tag, ok := f.Tag.Lookup(tagType[ct])
         allowUpdateTag, allowUpdateTagFound := f.Tag.Lookup("singleUpdate")
         // Ignore fields marked with update:no tag
         if ok && tag == fieldTag {
@@ -146,7 +149,7 @@ func updateObjectField(c *gin.Context, contentType string, obj interface {}, fie
     }
 
     if fieldIdx == -1 {
-        respFunc[contentType](c, 400, apierrors.NoSuchField(t.String(), fieldTag))
+        respFunc[ct](c, 400, apierrors.NoSuchField(t.String(), fieldTag))
         return errors.New("")
     }
 
@@ -157,7 +160,7 @@ func updateObjectField(c *gin.Context, contentType string, obj interface {}, fie
         case reflect.Bool:
             boolVal, err := strconv.ParseBool(newValue)
             if err != nil {
-                respFunc[contentType](c, 400, apierrors.ParseError("bool", newValue))
+                respFunc[ct](c, 400, apierrors.ParseError("bool", newValue))
                 return errors.New("")
             } else {
                 field.SetBool(boolVal)
@@ -165,7 +168,7 @@ func updateObjectField(c *gin.Context, contentType string, obj interface {}, fie
         case reflect.Int:
             intVal, err := strconv.Atoi(newValue)
             if err != nil {
-                respFunc[contentType](c, 400, apierrors.ParseError("integer", newValue))
+                respFunc[ct](c, 400, apierrors.ParseError("integer", newValue))
                 return errors.New("")
             } else {
                 field.SetInt(int64(intVal))
@@ -173,7 +176,7 @@ func updateObjectField(c *gin.Context, contentType string, obj interface {}, fie
         case reflect.String:
             field.SetString(newValue)
         default:
-            respFunc[contentType](c, 400, apierrors.ParseError(fieldTag, newValue))
+            respFunc[ct](c, 400, apierrors.ParseError(fieldTag, newValue))
             return errors.New("")
         }
     }
@@ -186,7 +189,7 @@ func updateObjectField(c *gin.Context, contentType string, obj interface {}, fie
         for _, valErr := range(*validationErrors) {
             msg = fmt.Sprintf("%s%v\n", msg, valErr)
         }
-        respFunc[contentType](c, 400, apierrors.InvalidValue(fieldTag, msg))
+        respFunc[ct](c, 400, apierrors.InvalidValue(fieldTag, msg))
     } else {
         // only replace the original if the updated object passes validation
         vOrig.Set(updatedObj.Elem())

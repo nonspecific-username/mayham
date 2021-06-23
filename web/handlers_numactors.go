@@ -22,7 +22,7 @@ func handleGetNumActorsModList(c *gin.Context) {
     }
 
     key := c.Param("mod")
-    err = checkModPath(c, ct, key)
+    err = checkModPath(c, key)
     if err != nil {
         return
     }
@@ -45,7 +45,7 @@ func handleCreateNumActorsMod(c *gin.Context) {
     }
 
     key := c.Param("mod")
-    err = checkModPath(c, ct, key)
+    err = checkModPath(c, key)
     if err != nil {
         return
     }
@@ -82,7 +82,7 @@ func handleGetNumActorsMod(c *gin.Context) {
 
     key := c.Param("mod")
     idxStr := c.Param("idx")
-    idx, err := checkNumActorsPath(c, ct, key, idxStr)
+    idx, err := checkNumActorsPath(c, key, idxStr)
     if err != nil {
         return
     }
@@ -107,7 +107,7 @@ func handleUpdateNumActorsMod(c *gin.Context) {
     key := c.Param("mod")
     idxStr := c.Param("idx")
     tgt := c.Param("target")
-    idx, err := checkNumActorsPath(c, ct, key, idxStr)
+    idx, err := checkNumActorsPath(c, key, idxStr)
     if err != nil {
         return
     }
@@ -118,7 +118,7 @@ func handleUpdateNumActorsMod(c *gin.Context) {
         return
     }
 
-    err = updateObjectField(c, ct, &((*runtimeCfg)[key].NumActors[idx]), tgt, req.Value)
+    err = updateObjectField(c, &((*runtimeCfg)[key].NumActors[idx]), tgt, req.Value)
     if err != nil {
         return
     }
@@ -128,14 +128,14 @@ func handleUpdateNumActorsMod(c *gin.Context) {
 func handleDeleteNumActorsMod(c *gin.Context) {
     log.Printf("handleDeleteNumActorsMod")
 
-    ct, err := checkContentType(c)
+    _, err := checkContentType(c)
     if err != nil {
         return
     }
 
     key := c.Param("mod")
     idxStr := c.Param("idx")
-    idx, err := checkNumActorsPath(c, ct, key, idxStr)
+    idx, err := checkNumActorsPath(c, key, idxStr)
     if err != nil {
         return
     }

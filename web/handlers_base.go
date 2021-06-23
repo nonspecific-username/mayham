@@ -85,7 +85,7 @@ func handleGetMod(c *gin.Context) {
     }
 
     key := c.Param("mod")
-    err = checkModPath(c, ct, key)
+    err = checkModPath(c, key)
     if err != nil {
         return
     }
@@ -104,7 +104,7 @@ func handleBulkUpdateMod(c *gin.Context) {
     }
 
     key := c.Param("mod")
-    err = checkModPath(c, ct, key)
+    err = checkModPath(c, key)
     if err != nil {
         return
     }
@@ -148,7 +148,7 @@ func handleUpdateMod(c *gin.Context) {
 
     key := c.Param("mod")
     tgt := c.Param("target")
-    err = checkModPath(c, ct, key)
+    err = checkModPath(c, key)
     if err != nil {
         return
     }
@@ -159,7 +159,7 @@ func handleUpdateMod(c *gin.Context) {
         return
     }
 
-    err = updateObjectField(c, ct, (*runtimeCfg)[key], tgt, req.Value)
+    err = updateObjectField(c, (*runtimeCfg)[key], tgt, req.Value)
     if err != nil {
         return
     }
@@ -169,13 +169,13 @@ func handleUpdateMod(c *gin.Context) {
 func handleDeleteMod(c *gin.Context) {
     log.Printf("handleDeleteMod")
 
-    ct, err := checkContentType(c)
+    _, err := checkContentType(c)
     if err != nil {
         return
     }
 
     key := c.Param("mod")
-    err = checkModPath(c, ct, key)
+    err = checkModPath(c, key)
     if err != nil {
         return
     }
