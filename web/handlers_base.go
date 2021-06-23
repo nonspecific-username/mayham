@@ -98,7 +98,7 @@ func handleGetMod(c *gin.Context) {
 func handleBulkUpdateMod(c *gin.Context) {
     log.Printf("handleBulkUpdateMod")
 
-    ct, err := checkContentType(c)
+    _, err := checkContentType(c)
     if err != nil {
         return
     }
@@ -109,32 +109,13 @@ func handleBulkUpdateMod(c *gin.Context) {
         return
     }
 
-    mod := (*runtimeCfg)[key]
+    mod := dsl.NewModConfig()
 
-    req := &updateModRequest{}
-    err = bindFunc[ct](c, &req)
+    err = updateObjectFields(c, (*runtimeCfg)[key], mod)
     if err != nil {
         return
     }
 
-    if req.Name != "" && mod.Name != req.Name {
-        mod.Name = req.Name
-    }
-
-    if req.Description != "" && mod.Description != req.Description{
-        mod.Description = req.Description
-    }
-
-    if req.Author != "" && mod.Author != req.Author {
-        mod.Author = req.Author
-    }
-
-    if mod.Enabled != req.Enabled {
-        mod.Enabled = req.Enabled
-    }
-
-    state.Sync()
-    c.Data(200, gin.MIMEHTML, nil)
 }
 
 

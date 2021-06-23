@@ -2,8 +2,11 @@ package web
 
 
 import (
+    "encoding/json"
+    "bytes"
     "errors"
     "fmt"
+    "io/ioutil"
     "strconv"
     "reflect"
 
@@ -11,11 +14,13 @@ import (
     "github.com/nonspecific-username/mayham/web/state"
 
     "github.com/gin-gonic/gin"
+    yaml "gopkg.in/yaml.v2"
 )
 
 
 type _respFunc func(*gin.Context, int, interface {})
 type _bindFunc func(*gin.Context, interface {}) error
+type _unmarshalFunc func([]byte, interface{}) error
 
 
 type updateFieldRequest struct {
@@ -37,6 +42,8 @@ var (
                                     ctYAML: yamlBind}
     tagType = map[string]string {ctJSON: "json",
                                  ctYAML: "yaml"}
+    unmarshalFunc = map[string]_unmarshalFunc{ctJSON: json.Unmarshal,
+                                              ctYAML: yaml.UnmarshalStrict}
 )
 
 
@@ -121,15 +128,25 @@ func checkNumActorsPath(c *gin.Context, key string, idx string) (int, error) {
 }
 
 
+// Make sure that newValue is valid before passing it here
+func updateSingleFieldByIndex(c *gin.Context, obj *reflect.Value, fieldIdx int, newValue *reflect.Value) error {
+    field := obj.Field(fieldIdx)
+    if field.IsValid() && field.CanSet() {
+        field.Set(*newValue)
+    }
+
+    return nil
+}
+
+
 func updateObjectField(c *gin.Context, obj interface {}, fieldTag string, newValue string) error {
     ct := c.ContentType()
-    // obj MUST be a pointer, otherwise this will crash and burn
-    vOrig := reflect.ValueOf(obj).Elem()
-    t := vOrig.Type()
 
-    // Create a copy of original
-    updatedObj := reflect.New(t)
-    updatedObj.Elem().Set(vOrig)
+    orig := reflect.ValueOf(obj).Elem()
+    t := orig.Type()
+    updated := reflect.New(t)
+    updatedDeref := updated.Elem()
+    updatedDeref.Set(orig)
 
     fieldIdx := -1
 
@@ -148,13 +165,9 @@ func updateObjectField(c *gin.Context, obj interface {}, fieldTag string, newVal
         }
     }
 
-    if fieldIdx == -1 {
-        respFunc[ct](c, 400, apierrors.NoSuchField(t.String(), fieldTag))
-        return errors.New("")
-    }
-
-    // Type checks
-    field := updatedObj.Elem().Field(fieldIdx)
+    // Perform type checks
+    var parsedValue interface{}
+    field := orig.Field(fieldIdx)
     if field.IsValid() && field.CanSet() {
         switch field.Kind() {
         case reflect.Bool:
@@ -163,7 +176,7 @@ func updateObjectField(c *gin.Context, obj interface {}, fieldTag string, newVal
                 respFunc[ct](c, 400, apierrors.ParseError("bool", newValue))
                 return errors.New("")
             } else {
-                field.SetBool(boolVal)
+                parsedValue = interface{}(boolVal)
             }
         case reflect.Int:
             intVal, err := strconv.Atoi(newValue)
@@ -171,18 +184,29 @@ func updateObjectField(c *gin.Context, obj interface {}, fieldTag string, newVal
                 respFunc[ct](c, 400, apierrors.ParseError("integer", newValue))
                 return errors.New("")
             } else {
-                field.SetInt(int64(intVal))
+                parsedValue = interface{}(intVal)
             }
         case reflect.String:
-            field.SetString(newValue)
+            parsedValue = interface{}(newValue)
         default:
             respFunc[ct](c, 400, apierrors.ParseError(fieldTag, newValue))
             return errors.New("")
         }
     }
 
+    pv := reflect.ValueOf(parsedValue)
+    err := updateSingleFieldByIndex(c, &updatedDeref, fieldIdx, &pv)
+    if err != nil {
+        return err
+    }
+
+    if fieldIdx == -1 {
+        respFunc[ct](c, 400, apierrors.NoSuchField(t.String(), fieldTag))
+        return errors.New("")
+    }
+
     // Validate updated object
-    ret := updatedObj.MethodByName("Validate").Call([]reflect.Value{})
+    ret := updated.MethodByName("Validate").Call([]reflect.Value{})
     var validationErrors *[]error = ret[0].Interface().(*[]error)
     if validationErrors != nil && len(*validationErrors) > 0 {
         msg := "Failed to validate the input data"
@@ -192,7 +216,92 @@ func updateObjectField(c *gin.Context, obj interface {}, fieldTag string, newVal
         respFunc[ct](c, 400, apierrors.InvalidValue(fieldTag, msg))
     } else {
         // only replace the original if the updated object passes validation
-        vOrig.Set(updatedObj.Elem())
+        orig.Set(updated.Elem())
+        state.Sync()
+        c.Data(204, gin.MIMEHTML, nil)
+    }
+
+    return nil
+}
+
+
+func updateBulkFields(c *gin.Context, obj *reflect.Value, partial *reflect.Value, changesMap *map[string]interface{}) error {
+    ct := c.ContentType()
+    t := obj.Type()
+
+    for i := 0; i < t.NumField(); i++ {
+        f := t.Field(i)
+        tag := f.Tag.Get(tagType[ct])
+        if sub, ok := (*changesMap)[tag]; ok {
+            switch partial.Field(i).Kind() {
+            case reflect.Struct:
+                objValueField := obj.Field(i)
+                partialValueField := partial.Field(i)
+                subMap := sub.(map[string]interface{})
+                err := updateBulkFields(c, &objValueField, &partialValueField, &subMap)
+                if err != nil {
+                    return err
+                }
+            default:
+                newValue := partial.Field(i)
+                // since we're pulling the interface{} value directly from the field #i,
+                // no need for additional type checks. It just works.
+                err := updateSingleFieldByIndex(c, obj, i, &newValue)
+                if err != nil {
+                    return err
+                }
+            }
+        }
+    }
+
+    return nil
+}
+
+
+func updateObjectFields(c *gin.Context, obj interface {}, changes interface{}) error{
+    ct := c.ContentType()
+
+    body, err := c.GetRawData()
+    if err != nil {
+        respFunc[ct](c, 400, apierrors.ParseError("unknown", fmt.Sprintf("%v", err)))
+    }
+
+    // a hack to allow a binding function to re-read c.Request.Body
+    c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+    err = bindFunc[ct](c, changes)
+    if err != nil {
+        return err
+    }
+
+    changesMap := make(map[string]interface{})
+    err = unmarshalFunc[ct](body, &changesMap)
+
+    orig := reflect.ValueOf(obj).Elem()
+    t := orig.Type()
+    updated := reflect.New(t)
+    updatedDeref := updated.Elem()
+    updatedDeref.Set(orig)
+    partial := reflect.ValueOf(changes).Elem()
+
+    err = updateBulkFields(c, &updatedDeref, &partial, &changesMap)
+    if err != nil {
+        return err
+    }
+
+    // Validate updated object
+    ret := updated.MethodByName("Validate").Call([]reflect.Value{})
+    var validationErrors *[]error = ret[0].Interface().(*[]error)
+    if validationErrors != nil && len(*validationErrors) > 0 {
+        msg := "Failed to validate the input data"
+        for _, valErr := range(*validationErrors) {
+            msg = fmt.Sprintf("%s%v\n", msg, valErr)
+        }
+        respFunc[ct](c, 400, apierrors.InvalidValue("validation", msg))
+        return errors.New("")
+    } else {
+        // only replace the original if the updated object passes validation
+        orig.Set(updatedDeref)
         state.Sync()
         c.Data(204, gin.MIMEHTML, nil)
     }
