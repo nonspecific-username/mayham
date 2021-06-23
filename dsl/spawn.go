@@ -11,7 +11,7 @@ import (
 )
 
 
-type NumActorsMode string
+type NumActorsMode = string
 
 const (
     Factor NumActorsMode = "factor"
@@ -21,7 +21,7 @@ const (
 )
 
 
-type NumActorsMAMode string
+type NumActorsMAMode = string
 
 const (
     MAScaled NumActorsMAMode = "scaled"
@@ -32,20 +32,20 @@ const (
 
 
 type SpawnSelector struct {
-    Package string `yaml:"pkg",omitempty json:"pkg"`
+    Package string `yaml:"pkg" json:"pkg"`
     Map string `yaml:"map" json:"map"`
-    Spawn string `yaml:"spawn",omitempty json:"spawn"`
+    Spawn string `yaml:"spawn" json:"spawn"`
 }
 
 
 type NumActorsMod struct {
     Enabled bool `yaml:"enabled" json:"enabled"`
-    Spawn *SpawnSelector `yaml:"spawn" json:"spawn"`
+    Spawn SpawnSelector `yaml:"spawn" json:"spawn"`
     Mode NumActorsMode `yaml:"mode" json:"mode"`
-    Param1 int `yaml: "param1" json:"param1"`
-    Param2 int `yaml: "param2",omitempty json:"param2"`
-    MaxActorsMode NumActorsMAMode `yaml:"max_actors_mode",omitempty json:"max_actors_mode"`
-    MaxActorsParam int `yaml:"max_actors_param",omitempty json:"max_actors_param"`
+    Param1 int `yaml:"param1" json:"param1"`
+    Param2 int `yaml:"param2" json:"param2"`
+    MaxActorsMode NumActorsMAMode `yaml:"max_actors_mode" json:"max_actors_mode"`
+    MaxActorsParam int `yaml:"max_actors_param" json:"max_actors_param"`
 }
 
 
@@ -202,10 +202,8 @@ func (mod *NumActorsMod) Validate() *[]error {
         errorsOutput = append(errorsOutput, errors.New(msg))
     }
 
-    if mod.Spawn == nil {
-        msg := "\"spawn\" is required"
-        errorsOutput = append(errorsOutput, errors.New(msg))
-    } else {
+    emptySS := SpawnSelector{}
+    if mod.Spawn != emptySS {
         if spawnSelectorErrors := mod.Spawn.Validate(); spawnSelectorErrors != nil {
             for _, e := range(*spawnSelectorErrors) {
                 msg := fmt.Sprintf("\"spawn\": %v", e)
