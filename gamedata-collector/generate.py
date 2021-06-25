@@ -35,7 +35,6 @@ sop_uncap_p.add_argument('sop_uncap_list', metavar='list', type=str,
 
 
 parser.add_argument('--output', type=str, help='file to write output to')
-parser.add_argument('--golang', action='store_true', help='file to write output to')
 args = parser.parse_args()
 
 
@@ -372,10 +371,6 @@ if __name__ == '__main__':
             output = deepmerge.always_merger.merge(output, msp.parse())
 
         output_txt = yaml.dump(output)
-        if args.golang:
-            output_txt = ("package gamedata\n\n"
-                          "var _spawnDataGenerated = `\n"
-                          "{}\n`").format(output_txt)
     elif args.target == 'spawnoptions':
         if args.spawnopts_target == 'uncap':
             with open(args.sop_uncap_list, 'r') as f:
@@ -388,10 +383,6 @@ if __name__ == '__main__':
                 if lines:
                     out_lines += lines
             output_txt = '\n'.join(out_lines)
-        if args.golang:
-            output_txt = ("package generator\n\n"
-                          "var _spawnOptionUncapModGenerated = `\n"
-                          "{}\n`").format(output_txt)
     if args.output is not None:
         with open(args.output, 'w+') as f:
             f.write(output_txt)

@@ -1,5 +1,5 @@
 *.sw?
-gamedata/generated_*.go
-generator/generated_*.go
+gamedata/generated/
+generator/static/
 build/
 persistent.yml
