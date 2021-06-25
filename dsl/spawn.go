@@ -54,32 +54,32 @@ func NewSpawnSelector() *SpawnSelector {
 }
 
 
-func (selector *SpawnSelector) FromYAML(input *[]byte) (*SpawnSelector, error, *[]error) {
+func (selector *SpawnSelector) FromYAML(input *[]byte) (*SpawnSelector, error, *ValidationError) {
     err := yaml.UnmarshalStrict(*input, selector)
 
     if err != nil {
         return nil, err, nil
     }
 
-    validationErrors := selector.Validate()
-    if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate SpawnSelector"), validationErrors
+    validationError := selector.Validate()
+    if validationError != nil {
+        return nil, errors.New("Failed to validate SpawnSelector"), validationError
     }
 
     return selector, nil, nil
 }
 
 
-func (selector *SpawnSelector) FromJSON(input *[]byte) (*SpawnSelector, error, *[]error) {
+func (selector *SpawnSelector) FromJSON(input *[]byte) (*SpawnSelector, error, *ValidationError) {
     err := json.Unmarshal(*input, selector)
 
     if err != nil {
         return nil, err, nil
     }
 
-    validationErrors := selector.Validate()
-    if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate SpawnSelector"), validationErrors
+    validationError := selector.Validate()
+    if validationError != nil {
+        return nil, errors.New("Failed to validate SpawnSelector"), validationError
     }
 
     return selector, nil, nil
@@ -100,34 +100,30 @@ func (selector SpawnSelector) JSON() string {
 }
 
 
-func (spawn *SpawnSelector) Validate() *[]error {
-    var errorsOutput []error
-
-    if spawn.Map == "" {
-        msg := "\"map\" is required"
-        errorsOutput = append(errorsOutput, errors.New(msg))
-    }
+func (spawn *SpawnSelector) Validate() *ValidationError {
+    var errorsOutput []*ValidationError
 
     if _, err := regexp.Compile(spawn.Package); err != nil {
-        msg := fmt.Sprintf("\"package\" is an invalid regexp: %v", err)
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        desc := fmt.Sprintf("invalid regexp: %v", err)
+        errorsOutput = append(errorsOutput, NewValidationError("pkg", desc, spawn.Package))
     }
 
     if _, err := regexp.Compile(spawn.Map); err != nil {
-        msg := fmt.Sprintf("\"map\" is an invalid regexp: %v", err)
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        desc := fmt.Sprintf("invalid regexp: %v", err)
+        errorsOutput = append(errorsOutput, NewValidationError("map", desc, spawn.Map))
     }
 
     if _, err := regexp.Compile(spawn.Spawn); err != nil {
-        msg := fmt.Sprintf("\"spawn\" is an invalid regexp: %v", err)
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        desc := fmt.Sprintf("invalid regexp: %v", err)
+        errorsOutput = append(errorsOutput, NewValidationError("spawn", desc, spawn.Spawn))
     }
 
     if len(errorsOutput) == 0 {
         return nil
     }
 
-    return &errorsOutput
+    validationError := NewValidationError("", "SpawnSelector validation failed", errorsOutput)
+    return validationError
 }
 
 
@@ -136,32 +132,32 @@ func NewNumActorsMod() *NumActorsMod {
 }
 
 
-func (mod *NumActorsMod) FromYAML(input *[]byte) (*NumActorsMod, error, *[]error) {
+func (mod *NumActorsMod) FromYAML(input *[]byte) (*NumActorsMod, error, *ValidationError) {
     err := yaml.UnmarshalStrict(*input, mod)
 
     if err != nil {
         return nil, err, nil
     }
 
-    validationErrors := mod.Validate()
-    if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate NumActorsMod"), validationErrors
+    validationError := mod.Validate()
+    if validationError != nil {
+        return nil, errors.New("Failed to validate NumActorsMod"), validationError
     }
 
     return mod, nil, nil
 }
 
 
-func (mod *NumActorsMod) FromJSON(input *[]byte) (*NumActorsMod, error, *[]error) {
+func (mod *NumActorsMod) FromJSON(input *[]byte) (*NumActorsMod, error, *ValidationError) {
     err := json.Unmarshal(*input, mod)
 
     if err != nil {
         return nil, err, nil
     }
 
-    validationErrors := mod.Validate()
-    if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate NumActorsMod"), validationErrors
+    validationError := mod.Validate()
+    if validationError != nil {
+        return nil, errors.New("Failed to validate NumActorsMod"), validationError
     }
 
     return mod, nil, nil
@@ -182,69 +178,61 @@ func (mod NumActorsMod) JSON() string {
 }
 
 
-func (mod *NumActorsMod) Validate() *[]error {
-    var errorsOutput []error
+func (mod *NumActorsMod) Validate() *ValidationError {
+    var errorsOutput []*ValidationError
 
 
     switch mod.Mode {
     case Factor, Absolute, Random, RandomFactor:
         break
     default:
-        msg := fmt.Sprintf("\"mode\" \"%s\" is invalid", mod.Mode)
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("mode", "invalid value", mod.Mode))
     }
 
     switch mod.MaxActorsMode {
     case MAScaled, MAMatch, MAFactor, MAAbsolute, "":
         break
     default:
-        msg := fmt.Sprintf("\"max_actors_mode\" \"%s\" is invalid", mod.MaxActorsMode)
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("max_actors_mode", "invalid value", mod.MaxActorsMode))
     }
 
     emptySS := SpawnSelector{}
     if mod.Spawn != emptySS {
-        if spawnSelectorErrors := mod.Spawn.Validate(); spawnSelectorErrors != nil {
-            for _, e := range(*spawnSelectorErrors) {
-                msg := fmt.Sprintf("\"spawn\": %v", e)
-                errorsOutput = append(errorsOutput, errors.New(msg))
-            }
+        if spawnSelectorError := mod.Spawn.Validate(); spawnSelectorError != nil {
+            spawnSelectorError.Field = "spawn"
+            errorsOutput = append(errorsOutput, spawnSelectorError)
         }
     }
 
     if mod.Mode == "" {
-        msg  := "\"mode\" is required"
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("mode", "missing param", nil))
     }
 
     if mod.Param1 == 0 {
-        msg  := "\"param1\" is required"
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("param1", "missing param", nil))
     }
 
     if (mod.Mode == Random || mod.Mode == RandomFactor) && mod.Param2 == 0 {
-        msg  := "\"param2\" is required when \"mode\" is either \"random\" or \"randomfactor\""
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("param2", "missing param", nil))
     }
 
     if (mod.Mode == Random || mod.Mode == RandomFactor) && mod.Param1 >= mod.Param2 {
-        msg  := "\"param1\" must be less than \"param2\" when \"mode\" is either \"random\" or \"randomfactor\""
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("param1", "value is lower than param2", mod.Param1))
+        errorsOutput = append(errorsOutput, NewValidationError("param2", "value is higher than param1", mod.Param2))
     }
 
     if mod.MaxActorsMode == MAFactor && mod.MaxActorsParam == 0 {
-        msg  := "\"max_actors_param\" is required when \"max_actors_mode\" is \"factor\""
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("max_actors_param", "missing param (max_actors_mode=factor)", nil))
     }
 
     if mod.MaxActorsMode == MAAbsolute && mod.MaxActorsParam == 0 {
-        msg  := "\"max_actors_param\" is required when \"max_actors_mode\" is \"absolute\""
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("max_actors_param", "missing param (max_actors_mode=absolute)", nil))
     }
 
     if len(errorsOutput) == 0 {
         return nil
     }
 
-    return &errorsOutput
+    validationError := NewValidationError("", "NumActorsMod validation failed", errorsOutput)
+    return validationError
 }

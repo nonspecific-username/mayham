@@ -24,57 +24,64 @@ func NewModConfig() *ModConfig {
 }
 
 
-func (cfg *ModConfig) FromYAML(input *[]byte) (*ModConfig, error, *[]error) {
+func (cfg *ModConfig) FromYAML(input *[]byte) (*ModConfig, error, *ValidationError) {
     err := yaml.UnmarshalStrict(*input, cfg)
 
     if err != nil {
         return nil, err, nil
     }
 
-    validationErrors := cfg.Validate()
-    if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate ModConfig"), validationErrors
+    validationError := cfg.Validate()
+    if validationError != nil {
+        return nil, errors.New("Failed to validate ModConfig"), validationError
     }
 
     return cfg, nil, nil
 }
 
 
-func (cfg *ModConfig) FromJSON(input *[]byte) (*ModConfig, error, *[]error) {
+func (cfg *ModConfig) FromJSON(input *[]byte) (*ModConfig, error, *ValidationError) {
     err := json.Unmarshal(*input, cfg)
 
     if err != nil {
         return nil, err, nil
     }
 
-    validationErrors := cfg.Validate()
-    if len(*validationErrors) > 0 {
-        return nil, errors.New("Failed to validate ModConfig"), validationErrors
+    validationError := cfg.Validate()
+    if validationError != nil {
+        return nil, errors.New("Failed to validate ModConfig"), validationError
     }
 
     return cfg, nil, nil
 }
 
 
-func (cfg *ModConfig) Validate() *[]error {
-    var errorsOutput []error
+func (cfg *ModConfig) Validate() *ValidationError {
+    var errorsOutput []*ValidationError
+    var numActorErrors []*ValidationError
 
     if cfg.Name == "" {
-        msg := "\"name\" is required"
-        errorsOutput = append(errorsOutput, errors.New(msg))
+        errorsOutput = append(errorsOutput, NewValidationError("name", "missing param", nil))
     }
 
     for i, mod := range(cfg.NumActors) {
-        errs := mod.Validate()
-        if errs != nil {
-            for _, e := range(*errs) {
-                msg := fmt.Sprintf("NumActors[%d]: %v", i, e)
-                errorsOutput = append(errorsOutput, errors.New(msg))
-            }
+        validationError := mod.Validate()
+        if validationError != nil {
+            validationError.Field = fmt.Sprintf("%d", i)
+            numActorErrors = append(numActorErrors, validationError)
         }
     }
 
-    return &errorsOutput
+    if len(numActorErrors) > 0 {
+        numActorError := NewValidationError("num_actors", "NumActors validation failed", numActorErrors)
+        errorsOutput = append(errorsOutput, numActorError)
+    }
+
+    if len(errorsOutput) > 0 {
+        return NewValidationError("", "ModConfig validation failed", errorsOutput)
+    } else {
+        return nil
+    }
 }
 
 

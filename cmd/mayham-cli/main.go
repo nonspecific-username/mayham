@@ -25,14 +25,12 @@ func main() {
             continue
         }
 
-        cfg, err, validationErrors := dsl.NewModConfig().FromYAML(&data)
+        cfg, err, validationError := dsl.NewModConfig().FromYAML(&data)
         if err != nil {
             haveErrors = true
-            log.Printf("Error parsing input file %s: %v:", confPath, err)
-            if validationErrors != nil && len(*validationErrors) > 0 {
-                for _, valErr := range(*validationErrors) {
-                    log.Printf("\t%v", valErr)
-                }
+            log.Printf("Error parsing input file %s: %v", confPath, err)
+            if validationError != nil {
+                log.Printf(validationError.String())
             }
         }
         dslConfigs = append(dslConfigs, cfg)

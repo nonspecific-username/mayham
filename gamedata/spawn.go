@@ -29,7 +29,7 @@ var spawnerList SpawnerList
 var unmarshalled bool = false
 
 
-func GetSpawners(selector *dsl.SpawnSelector) []*Spawner {
+func GetSpawners(selector dsl.SpawnSelector) []*Spawner {
     if !unmarshalled {
         parseSpawnData()
     }

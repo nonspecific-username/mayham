@@ -21,16 +21,11 @@ const (
 
 
 func Init() error {
-    var err error
-    var validationErrors *[]error
-
-    runtimeCfg, err, validationErrors = state.PersistentState(cfgFilename)
+    runtimeCfg, err, validationError := state.PersistentState(cfgFilename)
     if err != nil {
         log.Printf("Error parsing input file %s: %v:", cfgFilename, err)
-        if validationErrors != nil && len(*validationErrors) > 0 {
-            for _, valErr := range(*validationErrors) {
-                log.Printf("\t%v", valErr)
-            }
+        if validationError != nil {
+            log.Printf(validationError.String())
         }
         return err
     }

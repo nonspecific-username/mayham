@@ -5,6 +5,8 @@ import (
     "io/ioutil"
     "time"
     "os"
+
+    "github.com/nonspecific-username/mayham/dsl"
 )
 
 
@@ -14,9 +16,9 @@ var (
 )
 
 
-func PersistentState(path string) (*MultiModConfig, error, *[]error) {
+func PersistentState(path string) (*MultiModConfig, error, *dsl.ValidationError) {
     var cfg MultiModConfig
-    var errs *[]error
+    var validationError *dsl.ValidationError
     if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
         cfg = NewMulti()
     } else {
@@ -25,9 +27,9 @@ func PersistentState(path string) (*MultiModConfig, error, *[]error) {
             return nil, err, nil
         }
 
-        cfg, err, errs = LoadMultiYAML(&data)
+        cfg, err, validationError = LoadMultiYAML(&data)
         if err != nil {
-            return nil, err, errs
+            return nil, err, validationError
         }
     }
 

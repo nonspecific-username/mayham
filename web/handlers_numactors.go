@@ -6,7 +6,6 @@ import (
     "fmt"
 
     "github.com/nonspecific-username/mayham/dsl"
-    apierrors "github.com/nonspecific-username/mayham/web/errors"
     "github.com/nonspecific-username/mayham/web/state"
 
     "github.com/gin-gonic/gin"
@@ -56,13 +55,9 @@ func handleCreateNumActorsMod(c *gin.Context) {
         return
     }
 
-    validationErrors := mod.Validate()
-    if validationErrors != nil && len(*validationErrors) > 0 {
-        msg := "Failed to validate the input data"
-        for _, valErr := range(*validationErrors) {
-            msg = fmt.Sprintf("%s%v\n", msg, valErr)
-        }
-        respFunc[ct](c, 400, apierrors.InvalidValue("numactors", msg))
+    validationError := mod.Validate()
+    if validationError != nil {
+        respFunc[ct](c, 400, validationError)
     } else {
         (*runtimeCfg)[key].NumActors = append((*runtimeCfg)[key].NumActors, *mod)
         state.Sync()

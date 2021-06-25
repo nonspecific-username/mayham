@@ -10,6 +10,7 @@ import (
     "strconv"
     "reflect"
 
+    "github.com/nonspecific-username/mayham/dsl"
     apierrors "github.com/nonspecific-username/mayham/web/errors"
     "github.com/nonspecific-username/mayham/web/state"
 
@@ -207,13 +208,10 @@ func updateObjectField(c *gin.Context, obj interface {}, fieldTag string, newVal
 
     // Validate updated object
     ret := updated.MethodByName("Validate").Call([]reflect.Value{})
-    var validationErrors *[]error = ret[0].Interface().(*[]error)
-    if validationErrors != nil && len(*validationErrors) > 0 {
-        msg := "Failed to validate the input data"
-        for _, valErr := range(*validationErrors) {
-            msg = fmt.Sprintf("%s%v\n", msg, valErr)
-        }
-        respFunc[ct](c, 400, apierrors.InvalidValue(fieldTag, msg))
+    var validationError *dsl.ValidationError = ret[0].Interface().(*dsl.ValidationError)
+    if validationError != nil {
+        respFunc[ct](c, 400, validationError)
+        return errors.New("")
     } else {
         // only replace the original if the updated object passes validation
         orig.Set(updated.Elem())
@@ -291,13 +289,9 @@ func updateObjectFields(c *gin.Context, obj interface {}, changes interface{}) e
 
     // Validate updated object
     ret := updated.MethodByName("Validate").Call([]reflect.Value{})
-    var validationErrors *[]error = ret[0].Interface().(*[]error)
-    if validationErrors != nil && len(*validationErrors) > 0 {
-        msg := "Failed to validate the input data"
-        for _, valErr := range(*validationErrors) {
-            msg = fmt.Sprintf("%s%v\n", msg, valErr)
-        }
-        respFunc[ct](c, 400, apierrors.InvalidValue("validation", msg))
+    var validationError *dsl.ValidationError = ret[0].Interface().(*dsl.ValidationError)
+    if validationError != nil {
+        respFunc[ct](c, 400, validationError)
         return errors.New("")
     } else {
         // only replace the original if the updated object passes validation

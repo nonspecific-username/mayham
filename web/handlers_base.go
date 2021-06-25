@@ -3,11 +3,9 @@ package web
 
 import (
     "log"
-    "fmt"
 
     "github.com/nonspecific-username/mayham/dsl"
     "github.com/nonspecific-username/mayham/web/state"
-    apierrors "github.com/nonspecific-username/mayham/web/errors"
 
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
@@ -60,13 +58,9 @@ func handleCreateMod(c *gin.Context) {
         return
     }
 
-    validationErrors := cfg.Validate()
-    if validationErrors != nil && len(*validationErrors) > 0 {
-        msg := "Failed to validate the input data"
-        for _, valErr := range(*validationErrors) {
-            msg = fmt.Sprintf("%s%v\n", msg, valErr)
-        }
-        respFunc[ct](c, 400, apierrors.InvalidValue("mod", msg))
+    validationError := cfg.Validate()
+    if validationError != nil {
+        respFunc[ct](c, 400, validationError)
     } else {
         key := uuid.New().String()
         (*runtimeCfg)[key] = cfg

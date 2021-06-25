@@ -20,8 +20,7 @@ func NewMulti() MultiModConfig {
     return cfg
 }
 
-func LoadMultiYAML(input *[]byte) (MultiModConfig, error, *[]error) {
-    var errorsOutput []error
+func LoadMultiYAML(input *[]byte) (MultiModConfig, error, *dsl.ValidationError) {
     cfg := make(map[string]*dsl.ModConfig)
     err := yaml.UnmarshalStrict(*input, cfg)
 
@@ -30,17 +29,10 @@ func LoadMultiYAML(input *[]byte) (MultiModConfig, error, *[]error) {
     }
 
     for id, subCfg := range cfg {
-        errs := subCfg.Validate()
-        if len(*errs) > 0 {
-            for _, e := range(*errs) {
-                msg := fmt.Sprintf("ModConfig[%s]: %v", id, e)
-                errorsOutput = append(errorsOutput, errors.New(msg))
-            }
-
+        validationError := subCfg.Validate()
+        if validationError != nil {
+            return nil, errors.New(fmt.Sprintf("Failed to validate MultiModConfig[%s]", id)), validationError
         }
-    }
-    if len(errorsOutput) > 0 {
-        return nil, errors.New("Failed to validate MultiModConfig"), &errorsOutput
     }
 
     return cfg, nil, nil
