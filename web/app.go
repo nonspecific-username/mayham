@@ -2,9 +2,13 @@ package web
 
 
 import (
+    "fmt"
     "log"
+    "net/http"
+    "path"
 
     "github.com/nonspecific-username/mayham/web/state"
+    "github.com/nonspecific-username/mayham/web/ui"
 
     "github.com/gin-gonic/gin"
 )
@@ -18,6 +22,12 @@ const (
     cfgFilename string = "persistent.yml"
     logFilename string = "mayham.log"
 )
+
+
+func serveStaticFile(c *gin.Context) {
+    c.FileFromFS(path.Join("react-app/build/", c.Request.URL.Path), http.FS(ui.Assets))
+    log.Printf("%s ---> %s", path.Join("react-app/build/", c.Request.URL.Path), c.Request.URL.Path)
+}
 
 
 func Init() error {
@@ -35,6 +45,16 @@ func Init() error {
     //g.Use(gin.LoggerWithWriter(logFilename))
     g.Use(gin.Recovery())
 
+    contents, err := ui.Assets.ReadDir("react-app/build")
+    if err != nil {
+        log.Fatal("Could not load embedded UI: %v", err)
+    }
+    for _, item := range(contents) {
+        g.GET(fmt.Sprintf("/%s", item.Name()), serveStaticFile)
+    }
+    g.GET("/static/*filepath", serveStaticFile)
+    g.GET("/", func(c *gin.Context) {c.FileFromFS("react-app/build/index.htm", http.FS(ui.Assets))})
+    g.GET("/index.html", func(c *gin.Context) {c.FileFromFS("react-app/build/index.htm", http.FS(ui.Assets))})
 
     g.GET("/mod/", handleGetModList)
     g.POST("/mod/", handleCreateMod)
