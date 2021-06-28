@@ -56,21 +56,21 @@ func Init() error {
     g.GET("/", func(c *gin.Context) {c.FileFromFS("react-app/build/index.htm", http.FS(ui.Assets))})
     g.GET("/index.html", func(c *gin.Context) {c.FileFromFS("react-app/build/index.htm", http.FS(ui.Assets))})
 
-    g.GET("/mod/", handleGetModList)
-    g.POST("/mod/", handleCreateMod)
+    g.GET("/api/mod/", handleGetModList)
+    g.POST("/api/mod/", handleCreateMod)
 
-    g.GET("/mod/:mod", handleGetMod)
-    g.PUT("/mod/:mod", handleBulkUpdateMod)
-    g.PUT("/mod/:mod/:target", handleUpdateMod)
-    g.DELETE("/mod/:mod", handleDeleteMod)
+    g.GET("/api/mod/:mod", handleGetMod)
+    g.PUT("/api/mod/:mod", handleBulkUpdateMod)
+    g.PUT("/api/mod/:mod/:target", handleUpdateMod)
+    g.DELETE("/api/mod/:mod", handleDeleteMod)
 
-    g.GET("/mod/:mod/numactors/", handleGetNumActorsModList)
-    g.POST("/mod/:mod/numactors/", handleCreateNumActorsMod)
+    g.GET("/api/mod/:mod/numactors/", handleGetNumActorsModList)
+    g.POST("/api/mod/:mod/numactors/", handleCreateNumActorsMod)
 
-    g.GET("/mod/:mod/numactors/:idx", handleGetNumActorsMod)
-    g.PUT("/mod/:mod/numactors/:idx", handleBulkUpdateNumActorsMod)
-    g.PUT("/mod/:mod/numactors/:idx/:target", handleUpdateNumActorsMod)
-    g.DELETE("/mod/:mod/numactors/:idx", handleDeleteNumActorsMod)
+    g.GET("/api/mod/:mod/numactors/:idx", handleGetNumActorsMod)
+    g.PUT("/api/mod/:mod/numactors/:idx", handleBulkUpdateNumActorsMod)
+    g.PUT("/api/mod/:mod/numactors/:idx/:target", handleUpdateNumActorsMod)
+    g.DELETE("/api/mod/:mod/numactors/:idx", handleDeleteNumActorsMod)
 
     return g.Run("localhost:8300")
 }
